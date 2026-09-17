@@ -204,6 +204,27 @@ HTML_DOC = """<!DOCTYPE html>
   .disclaimer{margin:16px;padding:12px 14px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;font-size:12px;color:#9A3412;line-height:1.6}
   .disclaimer b{color:#C2410C}
 
+  /* 公告条 */
+  .notice{background:linear-gradient(90deg,#EEF2FF,#E0E7FF);border-bottom:1px solid #C7D2FE;padding:9px 16px;font-size:13px;color:#3730A3;display:flex;align-items:center;gap:8px;cursor:pointer}
+  .notice .ntag{flex:0 0 auto;background:var(--primary);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+  .notice .ntxt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .notice .ngo{flex:0 0 auto;color:var(--primary);font-weight:600}
+
+  /* 关于页 */
+  .aboutpage{display:none;background:var(--bg);min-height:70vh;padding:0 16px 30px}
+  .aboutpage .ap-head{background:var(--primary);color:#fff;margin:0 -16px;padding:16px;display:flex;align-items:center;gap:10px}
+  .aboutpage .back-btn{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer}
+  .aboutpage .ap-title{font-size:18px;font-weight:700}
+  .aboutpage .ap-card{background:var(--card);border-radius:12px;padding:16px;margin-top:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .aboutpage .ap-card h3{font-size:15px;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .aboutpage .ap-card p{font-size:13px;color:var(--text);line-height:1.8}
+  .aboutpage .ap-card ul{margin:6px 0 0 18px;font-size:13px;color:var(--text);line-height:1.9}
+  .aboutpage .ap-card .hl{background:var(--primary-bg);border-radius:6px;padding:2px 8px;color:var(--primary-dark);font-weight:600}
+
+  /* 页脚署名 */
+  .site-footer{margin:20px 16px 8px;text-align:center;font-size:12px;color:var(--sub);line-height:1.8}
+  .site-footer .fm{color:var(--primary);font-weight:600}
+
   /* 广告位 */
   .adbar{background:#fff;border-bottom:1px solid var(--line);padding:8px 16px;display:flex;align-items:center;gap:10px}
   .adbar .adlabel{font-size:11px;color:var(--sub);background:var(--bg);padding:2px 8px;border-radius:4px;flex:0 0 auto}
@@ -291,6 +312,11 @@ HTML_DOC = """<!DOCTYPE html>
   <div class="meta">数据更新：__UPDATED__ · 心智障碍可投  条岗位 · __CITIES__ 个城市</div>
 </div>
 <div class="adbar"><span class="adlabel">广告位</span><div class="adbody" id="adTop"></div></div>
+<div class="notice" onclick="showAbout()">
+  <span class="ntag">公告</span>
+  <span class="ntxt">行隅 · 心智障碍就业导航正式上线：聚合全国 4000+ 可投岗位，帮助心智障碍青年实现就业。点击查看关于我们</span>
+  <span class="ngo">关于 ›</span>
+</div>
 <div class="searchbar"><input id="q" placeholder="搜索岗位名称、公司、城市…" autocomplete="off"></div>
 <div class="cols-title"><h2>专栏</h2><span>社会认知 · 真实故事 · 政策教学 · 社会活动</span></div>
 <div class="col-grid" id="colGrid"></div>
@@ -326,6 +352,43 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 
 <div class="disclaimer"><b>免责声明：</b>本页岗位信息均采集自公开渠道（中国残联就业服务平台、各省市残联与人社部门官网等），仅供求职者参考。信息版权归原发布方所有，岗位真实性、时效性与联系方式以原发布方为准，请自行核实后再联系。本站仅为信息导航，不代投、不代招、不收取任何费用。若原岗位已招满或过期，以原平台为准。</div>
+
+<div class="aboutpage" id="aboutPage">
+  <div class="ap-head">
+    <button class="back-btn" onclick="showHome()">← 返回首页</button>
+    <span class="ap-title">关于行隅</span>
+  </div>
+  <div class="ap-card">
+    <h3>行隅是什么</h3>
+    <p>行隅是一个面向<strong>心智障碍（智力残疾、精神残疾等）求职者</strong>的公益岗位信息导航平台。我们把散落在各官方平台上的助残岗位聚合到一起，让求职者、家长和就业辅导员能在一处找到全国可投的工作机会。</p>
+  </div>
+  <div class="ap-card">
+    <h3>数据从哪里来</h3>
+    <p>岗位信息聚合自<strong>中国残联就业服务平台、各省市残联与人社局官网</strong>等公开渠道，每半周自动更新一次，保证时效。信息版权归原发布方所有，仅供参考。</p>
+  </div>
+  <div class="ap-card">
+    <h3>这里有什么</h3>
+    <ul>
+      <li>全国 <span class="hl">__TOTAL__ 条</span> 助残岗位，按城市、首字母、有效/失效自由筛选</li>
+      <li>岗位详情一键跳转原平台，公司信息可查</li>
+      <li>六大专栏：社会认知 · 他们正在做 · 企业故事 · 政策与普法 · 工作教学 · 社会活动</li>
+      <li>收藏功能：看中的岗位存下来慢慢看</li>
+    </ul>
+  </div>
+  <div class="ap-card">
+    <h3>如何投稿</h3>
+    <p>欢迎分享你的故事、经验或建议。请发送至邮箱 <span class="hl">1739528214@qq.com</span>，审核通过后会在专栏发布。本平台为纯公益信息导航，<strong>不收取任何费用</strong>。</p>
+  </div>
+  <div class="ap-card">
+    <h3>免责声明</h3>
+    <p>本平台仅做信息展示与汇总，不代投、不代招、不收费、不与任何企业分成。岗位真实性、时效性与联系方式以原发布方为准，请自行核实后再联系。若原岗位已招满或过期，以原平台为准。</p>
+  </div>
+</div>
+
+<div class="site-footer">
+  <div>© 2026 行隅 · 心智障碍就业导航</div>
+  <div>创建与维护：<span class="fm">__AUTHOR__</span></div>
+</div>
 
 <script>
 // ===== 安全工具 =====
@@ -483,10 +546,19 @@ function showCol(key){
 }
 function showHome(){
   document.getElementById('colPage').style.display = 'none';
+  document.getElementById('aboutPage').style.display = 'none';
+}
+function showAbout(){
+  document.getElementById('colPage').style.display = 'none';
+  document.getElementById('aboutPage').style.display = 'block';
+  document.getElementById('aboutPage').scrollTop = 0;
+  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange', function(){
   var m = location.hash.match(/^#col\/(\w+)/);
-  if(m && COLDEF[m[1]]){ showCol(m[1]); } else { showHome(); }
+  if(m && COLDEF[m[1]]){ showCol(m[1]); }
+  else if(location.hash === '#about'){ showAbout(); }
+  else { showHome(); }
 });
 renderColGrid();
 
@@ -668,6 +740,9 @@ HTML_DOC = HTML_DOC.replace('__JS_CHUNK0__', js_chunk0).replace('__JS_CITIES__',
 HTML_DOC = HTML_DOC.replace('__CHUNK_TOTAL__', str(chunk_total))
 HTML_DOC = HTML_DOC.replace('__ST_VALID__', str(st_valid)).replace('__ST_OFF__', str(st_off))
 HTML_DOC = HTML_DOC.replace('__COLS_DATA__', js_cols)
+# 创建者署名（用户确认后填写，留空则显示"行隅团队"）
+AUTHOR = ''
+HTML_DOC = HTML_DOC.replace('__AUTHOR__', esc(AUTHOR) if AUTHOR else '行隅团队')
 # 心智障碍可投数
 HTML_DOC = HTML_DOC.replace('心智障碍可投  条岗位', '心智障碍可投 ' + str(total_mh) + ' 条岗位')
 
