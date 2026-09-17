@@ -121,13 +121,17 @@ HTML_DOC = """<!DOCTYPE html>
   .letterbar .ltr.dis{color:#D1D5DB;cursor:default}
   .letterbar .all{flex:0 0 auto;padding:0 12px;height:32px;line-height:32px;border-radius:8px;font-size:13px;font-weight:600;color:var(--primary);background:var(--primary-bg);cursor:pointer}
   /* 城市标签区 */
-  .citytag{padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.citytag{padding:10px 16px;background:#fff}
   .citytag .ttl{font-size:12px;color:var(--sub);margin-bottom:8px}
   .citytag .tags{display:flex;flex-wrap:wrap;gap:8px}
   .citytag .tag{padding:6px 12px;border-radius:16px;font-size:13px;background:var(--primary-bg);color:var(--primary-dark);cursor:pointer}
   .citytag .tag.on{background:var(--primary);color:#fff}
   /* 列表 */
   .list{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+  /* 加载更多 */
+  .more-wrap{padding:14px 16px 22px;text-align:center}
+  .more-btn{display:inline-block;padding:11px 34px;border-radius:24px;border:none;background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(79,70,229,.25)}
+  .more-btn:hover{opacity:.9}
   .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
   .card .row1{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
   .card .nm{font-size:16px;font-weight:700;color:var(--text);flex:1}
@@ -163,15 +167,22 @@ HTML_DOC = """<!DOCTYPE html>
   .adbar .adbody{flex:1;font-size:13px;color:var(--text)}
   .adbar a{color:var(--primary);text-decoration:none;font-weight:600}
   .adbar .adempty{color:#9CA3AF;font-size:12px}
-  /* 字母条折叠 */
-  .letterbar{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:118px;z-index:15}
-  .letterbar .lbar-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;cursor:pointer}
-  .letterbar .lbar-toggle .lt{font-size:13px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:6px}
-  .letterbar .lbar-toggle .arrow{transition:transform .2s;font-size:11px}
-  .letterbar .lbar-toggle.open .arrow{transform:rotate(180deg)}
-  .letterbar .wrap{display:none;gap:4px;overflow-x:auto;padding:0 10px 10px;scrollbar-width:none}
-  .letterbar .wrap.show{display:flex}
+  /* 城市折叠切换条 */
+  .citytoggle{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+  .citytoggle .ct{font-size:13px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:6px}
+  .citytoggle .arrow{transition:transform .2s;font-size:11px;display:inline-block}
+  .citytoggle.open .arrow{transform:rotate(180deg)}
+  .citytoggle .ctstate{font-size:12px;color:var(--sub)}
+  /* 城市区整体（字母条+城市标签），默认收起 */
+  .cityzone{display:none;border-bottom:1px solid var(--line);background:#fff}
+  .cityzone.show{display:block}
+  .letterbar{padding:10px 10px 4px;background:#fff}
+  .letterbar .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
   .letterbar .wrap::-webkit-scrollbar{display:none}
+  .letterbar .ltr{flex:0 0 auto;width:32px;height:32px;line-height:32px;text-align:center;border-radius:8px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer}
+  .letterbar .ltr.on{background:var(--primary);color:#fff}
+  .letterbar .ltr.dis{color:#D1D5DB;cursor:default}
+  .letterbar .all{flex:0 0 auto;padding:0 12px;height:32px;line-height:32px;border-radius:8px;font-size:13px;font-weight:600;color:var(--primary);background:var(--primary-bg);cursor:pointer}
   /* 失效岗位 */
   .card.expired{opacity:.55;background:#F9FAFB}
   .badge.off{background:#E5E7EB;color:#6B7280}
@@ -205,13 +216,6 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 <div class="adbar"><span class="adlabel">广告位</span><div class="adbody" id="adTop"></div></div>
 <div class="searchbar"><input id="q" placeholder="搜索岗位名称、公司、城市…" autocomplete="off"></div>
-<div class="letterbar"><div class="lbar-toggle" id="lbarToggle"><span class="lt">城市索引 <span class="arrow">▼</span></span><span style="font-size:12px;color:var(--sub)" id="lbarState">展开</span></div><div class="wrap" id="letters"></div></div>
-<div class="stat"><span>岗位 <b id="stTotal">__TOTAL__</b></span><span>城市 <b id="stCity">__CITIES__</b></span><span>当前显示 <b id="stShow">0</b></span><span style="margin-left:auto"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="onlyValid" checked> 仅看有效</label></span></div>
-<div class="citytag"><div class="ttl" id="cityHint">选择城市查看岗位</div><div class="tags" id="tags"></div></div>
-<div class="list" id="list"></div>
-<div class="empty" id="empty" style="display:none">没有找到符合条件的岗位，换个关键词试试</div>
-<div class="adbar"><span class="adlabel">广告位</span><div class="adbody" id="adBottom"></div></div>
-
 <div class="cols">
   <div class="col-card">
     <div class="col-head"><span class="ico">化</span><span class="tt">社会化专栏</span><span class="sub">帮助心智障碍者融入社会</span></div>
@@ -234,6 +238,21 @@ HTML_DOC = """<!DOCTYPE html>
     <div id="col-teach"></div>
   </div>
 </div>
+<div class="citytoggle" id="cityToggle"><span class="ct">城市筛选 <span class="arrow">▼</span></span><span class="ctstate" id="cityState">展开</span></div>
+<div class="cityzone" id="cityZone">
+<div class="letterbar"><div class="wrap" id="letters"></div></div>
+<div class="citytag"><div class="ttl" id="cityHint">选择城市查看岗位</div><div class="tags" id="tags"></div></div>
+</div>
+
+
+<div class="stat"><span>岗位 <b id="stTotal">__TOTAL__</b></span><span>城市 <b id="stCity">__CITIES__</b></span><span>当前显示 <b id="stShow">0</b></span><span style="margin-left:auto"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="onlyValid" checked> 仅看有效</label></span></div>
+
+<div class="list" id="list"></div>
+<div class="more-wrap" id="moreWrap" style="display:none"><button class="more-btn" id="moreBtn">加载更多岗位</button></div>
+<div class="empty" id="empty" style="display:none">没有找到符合条件的岗位，换个关键词试试</div>
+<div class="adbar"><span class="adlabel">广告位</span><div class="adbody" id="adBottom"></div></div>
+
+
 
 <div class="submit">
   <div class="t1">想分享你的故事、经验或投稿？</div>
@@ -250,12 +269,12 @@ var curLetter = '全部', curCity = '全部', kw = '';
 var onlyValid = true;
 
 // 字母条：默认收起，点击展开
-var lbarToggle = document.getElementById('lbarToggle');
-var lettersWrap = document.getElementById('letters');
-lbarToggle.addEventListener('click', function(){
-  var open = lettersWrap.classList.toggle('show');
-  lbarToggle.classList.toggle('open', open);
-  document.getElementById('lbarState').textContent = open ? '展开' : '收起';
+var cityToggle = document.getElementById('cityToggle');
+var cityZone = document.getElementById('cityZone');
+cityToggle.addEventListener('click', function(){
+  var open = cityZone.classList.toggle('show');
+  cityToggle.classList.toggle('open', open);
+  document.getElementById('cityState').textContent = open ? '收起' : '展开';
 });
 var LETTERS = ['全部'].concat([...new Set(CITIES.map(function(c){return c.letter}))].sort());
 var lettersEl = document.getElementById('letters');
@@ -266,7 +285,7 @@ LETTERS.forEach(function(L){
   if(L==='#'){
     d.addEventListener('click', function(){});
   } else {
-    d.addEventListener('click', function(){ curLetter = L; renderCities(); render(); });
+    d.addEventListener('click', function(){ curLetter = L; shownMax = PAGE_SIZE; renderCities(); render(); });
   }
   lettersEl.appendChild(d);
 });
@@ -274,6 +293,7 @@ LETTERS.forEach(function(L){
 // 有效/失效筛选
 document.getElementById('onlyValid').addEventListener('change', function(){
   onlyValid = this.checked;
+  shownMax = PAGE_SIZE;
   render();
 });
 
@@ -322,13 +342,13 @@ function renderCities(){
   var all = document.createElement('span');
   all.className = 'tag' + (curCity==='全部'?' on':'');
   all.textContent = '全部城市 ('+ list.reduce(function(a,c){return a+c.count},0) +')';
-  all.addEventListener('click', function(){ curCity='全部'; renderCities(); render(); });
+  all.addEventListener('click', function(){ curCity='全部'; shownMax = PAGE_SIZE; renderCities(); render(); cityZone.classList.remove('show'); cityToggle.classList.remove('open'); document.getElementById('cityState').textContent = '展开'; });
   tagEl.appendChild(all);
   list.forEach(function(c){
     var s = document.createElement('span');
     s.className = 'tag' + (curCity===c.name?' on':'');
     s.textContent = c.name + ' (' + c.count + ')';
-    s.addEventListener('click', function(){ curCity = c.name; renderCities(); render(); });
+    s.addEventListener('click', function(){ curCity = c.name; shownMax = PAGE_SIZE; renderCities(); render(); });
     tagEl.appendChild(s);
   });
 }
@@ -365,9 +385,12 @@ function sourceUrl(s){
   return 'https://www.cdpee.org.cn/';
 }
 
+var PAGE_SIZE = 10;
+var shownMax = PAGE_SIZE;
+
 function render(){
   var el = document.getElementById('list'); el.innerHTML = '';
-  var shown = 0;
+  var shown = 0, total = 0;
   JOBS.forEach(function(j){
     var isOff = j.dl && fmtDeadline(j.dl)==='已截止';
     if(onlyValid && isOff) return;
@@ -380,6 +403,8 @@ function render(){
       var s = (j.n+j.o+j.c+j.s).toLowerCase();
       if(s.indexOf(kw.toLowerCase())<0) return;
     }
+    total++;
+    if(shown >= shownMax) return;
     shown++;
     var card = document.createElement('div'); card.className = 'card' + (isOff?' expired':'');
     var dl = fmtDeadline(j.dl), pb = fmtTime(j.pb);
@@ -404,14 +429,24 @@ function render(){
       '</div></div>';
     el.appendChild(card);
   });
-  document.getElementById('stShow').textContent = shown;
-  document.getElementById('empty').style.display = shown ? 'none' : 'block';
+  document.getElementById('stShow').textContent = total;
+  document.getElementById('empty').style.display = total ? 'none' : 'block';
+  var mw = document.getElementById('moreWrap');
+  if(total > shownMax){ mw.style.display = 'block'; }
+  else { mw.style.display = 'none'; }
 }
+
+// 加载更多
+document.getElementById('moreBtn').addEventListener('click', function(){
+  shownMax += 20;
+  render();
+});
 
 // 搜索
 document.getElementById('q').addEventListener('input', function(e){
   kw = e.target.value.trim();
-  if(kw){ curLetter='全部'; curCity='全部'; renderCities(); }
+  if(kw){ curLetter='全部'; curCity='全部'; shownMax = PAGE_SIZE; renderCities(); }
+  shownMax = PAGE_SIZE;
   render();
 });
 
