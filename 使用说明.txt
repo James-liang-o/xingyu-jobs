@@ -1,0 +1,20 @@
+【行隅·全国心智障碍岗位爬虫】部署到 GitHub Actions 的说明
+============================================================
+
+一、仓库文件说明
+- spider_national.py   : 爬虫主脚本（中国残联平台动态接口 + 上海人社局 + 残联动态，只保留心智障碍可投岗位）
+- gen_page.py          : 生成展示页（行隅_全国岗位导航.html）
+- jobs_national.json   : 最新爬取数据（全量）
+- jobs_national.csv    : 表格版
+- .github/workflows/update.yml : 定时任务配置（每月1日、16日 10:15 自动跑）
+- requirements.txt     : Python 依赖
+
+二、部署步骤
+1. 打开 https://github.com/new 新建仓库（Public 或 Private 都行，名字如 xingyu-jobs）
+2. 网页上传以上全部文件（含 .github/workflows/update.yml，注意 .github 文件夹也要上传）
+3. 等第一次自动运行（或手动 Actions 触发一次）
+4. 页面文件 行隅_全国岗位导航.html 会在每次运行后自动更新
+
+三、查看更新结果
+- GitHub 仓库页面点 Actions 标签，可看到每次自动运行记录
+- 每次运行会把更新后的 json/csv/html 自动提交回仓库
