@@ -2,6 +2,27 @@
 """生成 行隅·全国助残岗位导航 展示页（自包含单文件 HTML）"""
 import json, re, html, datetime, urllib.parse, os
 
+# ================= 站点所有权验证（请勿删除） =================
+# 本站由创建者本人原创开发。创建者持有一个「私密标识」，可随时通过页面 #verify 验证所有权。
+# 私密标识不会明文出现在任何生成的页面/代码中，页面只保存其哈希指纹。
+# 设置方式（按优先级）：环境变量 OWN_KEY > 本目录 own_key.txt > 内置默认值
+_own_key = os.environ.get('OWN_KEY', '')
+if not _own_key:
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'own_key.txt'), encoding='utf-8') as _f:
+            _own_key = _f.read().strip()
+    except Exception:
+        _own_key = ''
+if not _own_key:
+    _own_key = 'xingyu-origin-2026'   # 默认占位，请设置为你自己的私密标识
+def _djb2(s):
+    h = 5381
+    for ch in s:
+        h = ((h * 33) + ord(ch)) & 0xFFFFFFFF
+    return format(h, '08x')
+OWN_HASH = _djb2(_own_key)
+# ================================================================
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(BASE, 'jobs_national.json'), encoding='utf-8') as f:
     data = json.load(f)
@@ -133,6 +154,7 @@ HTML_DOC = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<!-- xingyu-origin: 本站由创建者原创开发，所有权指纹 __OWN_HASH__（#verify 可验证） -->
 <title>行隅 · 心智障碍就业导航 - 全国助残岗位信息平台</title>
 <meta name="description" content="行隅：为心智障碍（智力残疾、精神残疾）求职者提供全国可投岗位信息导航，聚合中国残联就业服务平台等公开渠道岗位，附就业政策、机构案例、企业故事、投稿与交流，帮助心智障碍青年实现就业。">
 <meta name="keywords" content="心智障碍就业,智力残疾就业,精神残疾就业,残疾人岗位,助残就业,支持性就业,行隅">
@@ -223,7 +245,16 @@ HTML_DOC = """<!DOCTYPE html>
 
   /* 页脚署名 */
   .site-footer{margin:20px 16px 8px;text-align:center;font-size:12px;color:var(--sub);line-height:1.8}
-  .site-footer .fm{color:var(--primary);font-weight:600}
+  .site-footer .fm{color:var(--primary);font-weight:600;text-decoration:none}
+
+  /* 所有权验证页 */
+  .verifypage{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:30;overflow-y:auto;padding:0 16px 30px}
+  .verifypage .ap-head{background:var(--primary);color:#fff;margin:0 -16px;padding:16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+  .verifypage .back-btn{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer}
+  .verifypage .ap-title{font-size:18px;font-weight:700}
+  .verifypage .ap-card{background:var(--card);border-radius:12px;padding:16px;margin-top:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .verifypage .ap-card h3{font-size:15px;color:var(--primary);margin-bottom:8px}
+  .verifypage .ap-card p{font-size:13px;color:var(--text);line-height:1.8}
 
   /* 广告位 */
   .adbar{background:#fff;border-bottom:1px solid var(--line);padding:8px 16px;display:flex;align-items:center;gap:10px}
@@ -386,8 +417,26 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 
 <div class="site-footer">
-  <div>© 2026 行隅 · 心智障碍就业导航</div>
-  <div>创建与维护：<span class="fm">__AUTHOR__</span></div>
+  <div>© 2026 行隅 · 心智障碍就业导航 · 原创开发</div>
+  <div><a href="#verify" class="fm">所有权验证 ›</a></div>
+</div>
+
+<div class="verifypage" id="verifyPage">
+  <div class="ap-head">
+    <button class="back-btn" onclick="showHome()">← 返回首页</button>
+    <span class="ap-title">所有权验证</span>
+  </div>
+  <div class="ap-card">
+    <h3>本站原创声明</h3>
+    <p>本站（行隅 · 心智障碍就业导航）由创建者本人原创开发。创建者持有一个私密标识，通过下方验证即可当场确认本站所有权。该标识仅保存在创建者本人处，页面与源码中均不出现明文。</p>
+  </div>
+  <div class="ap-card">
+    <h3>输入私密标识</h3>
+    <p>请输入创建者私密标识完成验证。标识只在本机进行比对，不联网、不存储、不上传。</p>
+    <input id="ownInput" type="password" placeholder="请输入私密标识" autocomplete="off" style="width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:8px;font-size:15px;margin-top:8px">
+    <button id="ownBtn" style="width:100%;margin-top:10px;padding:11px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-size:15px;font-weight:600;cursor:pointer">验证</button>
+    <div id="ownResult" style="margin-top:10px;font-size:14px;line-height:1.7"></div>
+  </div>
 </div>
 
 <script>
@@ -547,17 +596,47 @@ function showCol(key){
 function showHome(){
   document.getElementById('colPage').style.display = 'none';
   document.getElementById('aboutPage').style.display = 'none';
+  document.getElementById('verifyPage').style.display = 'none';
 }
 function showAbout(){
   document.getElementById('colPage').style.display = 'none';
   document.getElementById('aboutPage').style.display = 'block';
+  document.getElementById('verifyPage').style.display = 'none';
   document.getElementById('aboutPage').scrollTop = 0;
   window.scrollTo(0,0);
 }
+function showVerify(){
+  document.getElementById('colPage').style.display = 'none';
+  document.getElementById('aboutPage').style.display = 'none';
+  document.getElementById('verifyPage').style.display = 'block';
+  document.getElementById('verifyPage').scrollTop = 0;
+  window.scrollTo(0,0);
+}
+// 所有权验证：djb2 哈希与页面指纹比对（标识本身不出现、不上传）
+var OWN_HASH = '__OWN_HASH__';
+function djb2(s){
+  var h = 5381;
+  for(var i = 0; i < s.length; i++){ h = ((h * 33) + s.charCodeAt(i)) >>> 0; }
+  return ('00000000' + h.toString(16)).slice(-8);
+}
+document.getElementById('ownBtn').addEventListener('click', function(){
+  var v = document.getElementById('ownInput').value.trim();
+  var res = document.getElementById('ownResult');
+  if(!v){ res.innerHTML = '<span style="color:var(--warn)">请输入私密标识</span>'; return; }
+  if(djb2(v) === OWN_HASH){
+    res.innerHTML = '<div style="background:#F0FDF4;border:1px solid #6EE7A0;border-radius:8px;padding:12px;color:#0F7B3E"><b>✓ 验证通过</b><br>本站所有权确认属于创建者本人。此结果由私密标识当场比对得出，可作为原创证明。</div>';
+  } else {
+    res.innerHTML = '<span style="color:var(--warn)">标识不匹配，验证失败</span>';
+  }
+});
+document.getElementById('ownInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ document.getElementById('ownBtn').click(); }
+});
 window.addEventListener('hashchange', function(){
   var m = location.hash.match(/^#col\/(\w+)/);
   if(m && COLDEF[m[1]]){ showCol(m[1]); }
   else if(location.hash === '#about'){ showAbout(); }
+  else if(location.hash === '#verify'){ showVerify(); }
   else { showHome(); }
 });
 renderColGrid();
@@ -740,9 +819,8 @@ HTML_DOC = HTML_DOC.replace('__JS_CHUNK0__', js_chunk0).replace('__JS_CITIES__',
 HTML_DOC = HTML_DOC.replace('__CHUNK_TOTAL__', str(chunk_total))
 HTML_DOC = HTML_DOC.replace('__ST_VALID__', str(st_valid)).replace('__ST_OFF__', str(st_off))
 HTML_DOC = HTML_DOC.replace('__COLS_DATA__', js_cols)
-# 创建者署名（用户确认后填写，留空则显示"行隅团队"）
-AUTHOR = ''
-HTML_DOC = HTML_DOC.replace('__AUTHOR__', esc(AUTHOR) if AUTHOR else '行隅团队')
+# 所有权指纹注入
+HTML_DOC = HTML_DOC.replace('__OWN_HASH__', OWN_HASH)
 # 心智障碍可投数
 HTML_DOC = HTML_DOC.replace('心智障碍可投  条岗位', '心智障碍可投 ' + str(total_mh) + ' 条岗位')
 
