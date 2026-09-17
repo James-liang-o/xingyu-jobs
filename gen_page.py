@@ -46,6 +46,8 @@ for j in jobs:
         'u': j.get('url', ''),
         'mh': 1 if j.get('is_mh') else 0,
         'ds': j.get('dis_str', ''),
+        'st': j.get('status', 'active'),
+        'cd': str(j.get('code', '')),
     })
 
 # 城市->岗位 映射（用于首字母索引）
@@ -76,7 +78,7 @@ js_rows = []
 for r in rows:
     js_rows.append({
         'n': r['n'], 'o': r['o'], 'l': r['l'], 'c': r['c'], 'e': r['e'], 'm': r['m'],
-        't': r['t'], 'pb': r['pb'], 'dl': r['dl'], 'dy': r['dy'], 's': r['s'], 'u': r['u'],
+        't': r['t'], 'pb': r['pb'], 'dl': r['dl'], 'dy': r['dy'], 's': r['s'], 'u': r['u'], 'st': r['st'],
     })
 js_data = json.dumps(js_rows, ensure_ascii=False)
 
@@ -199,6 +201,39 @@ HTML_DOC = """<!DOCTYPE html>
   .col-item .s{font-size:12px;color:var(--sub);margin-top:4px;line-height:1.6}
   .col-item .src{font-size:11px;color:var(--primary);margin-top:4px}
   .col-item .src a{color:var(--primary);text-decoration:none}
+  /* 专栏大入口 */
+  .cols-title{display:flex;align-items:baseline;gap:10px;padding:0 16px;margin-top:14px}
+  .cols-title h2{font-size:19px;font-weight:800;margin:0}
+  .cols-title span{font-size:12px;color:var(--sub)}
+  .col-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px 16px}
+  .col-grid .col-big{background:var(--card);border-radius:14px;padding:14px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;text-align:center;border:1px solid var(--line);transition:transform .12s,box-shadow .12s;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .col-grid .col-big:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(79,70,229,.14)}
+  .col-grid .col-big .ico{width:40px;height:40px;border-radius:12px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px}
+  .col-grid .col-big .tt{font-size:14px;font-weight:700;color:var(--text)}
+  .col-grid .col-big .sub{font-size:10px;color:var(--sub);line-height:1.4;min-height:26px}
+  .col-grid .col-big .cnt{font-size:11px;color:var(--primary);font-weight:600}
+  .col-grid .col-big .go{font-size:12px;color:var(--primary)}
+  /* 专栏详情页（全屏 overlay） */
+  .colpage{position:fixed;inset:0;background:#F4F5FA;z-index:100;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .colp-head{position:sticky;top:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);z-index:2}
+  .colp-head .back-btn{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer}
+  .colp-head .colp-ico{width:30px;height:30px;border-radius:9px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .colp-head .colp-tt{font-size:16px;font-weight:800}
+  .colp-head .colp-sub{font-size:11px;color:var(--sub);margin-left:auto}
+  .colp-list{padding:12px 16px 40px;display:flex;flex-direction:column;gap:10px}
+  .colp-item{display:block;background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-decoration:none;color:inherit;border:1px solid var(--line)}
+  .colp-item .t{font-size:15px;font-weight:700;color:var(--text);line-height:1.5}
+  .colp-item .s{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.7}
+  .colp-item .meta{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--primary)}
+  .colp-item .meta .src{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%}
+  .colp-item .meta .go{margin-left:auto;font-weight:700}
+  /* 收藏 */
+  .favbtn{border:1px solid var(--line);background:#fff;border-radius:8px;min-width:34px;height:28px;font-size:15px;cursor:pointer;line-height:1;color:#9CA3AF;flex:0 0 auto}
+  .favbtn.on{color:#F59E0B;border-color:#FCD34D;background:#FFFBEB}
+  .favtoggle{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--sub)}
+  .favtoggle.on{color:var(--primary);border-color:var(--primary);background:var(--primary-bg)}
+  @media(max-width:720px){.col-grid{grid-template-columns:repeat(5,1fr);gap:8px;overflow-x:auto;padding:12px 12px}.col-grid .col-big{min-width:110px}}
+  @media(max-width:420px){.col-grid{grid-template-columns:repeat(2,1fr)}}
   /* 投稿区 */
   .submit{margin:0 16px 16px;background:linear-gradient(135deg,#4F46E5,#3730A3);border-radius:14px;padding:20px;color:#fff;text-align:center}
   .submit .t1{font-size:17px;font-weight:700}
@@ -216,27 +251,16 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 <div class="adbar"><span class="adlabel">广告位</span><div class="adbody" id="adTop"></div></div>
 <div class="searchbar"><input id="q" placeholder="搜索岗位名称、公司、城市…" autocomplete="off"></div>
-<div class="cols">
-  <div class="col-card">
-    <div class="col-head"><span class="ico">化</span><span class="tt">社会化专栏</span><span class="sub">帮助心智障碍者融入社会</span></div>
-    <div id="col-social"></div>
+<div class="cols-title"><h2>专栏</h2><span>社会认知 · 真实故事 · 政策教学</span></div>
+<div class="col-grid" id="colGrid"></div>
+<div class="colpage" id="colPage" style="display:none">
+  <div class="colp-head">
+    <button class="back-btn" onclick="showHome()">← 返回首页</button>
+    <span class="colp-ico" id="colPIco">化</span>
+    <span class="colp-tt" id="colPTt">专栏</span>
+    <span class="colp-sub" id="colPSub"></span>
   </div>
-  <div class="col-card">
-    <div class="col-head"><span class="ico">行</span><span class="tt">他们正在做</span><span class="sub">各地机构与真实案例</span></div>
-    <div id="col-doing"></div>
-  </div>
-  <div class="col-card">
-    <div class="col-head"><span class="ico">企</span><span class="tt">企业故事</span><span class="sub">在行动的企业</span></div>
-    <div id="col-company"></div>
-  </div>
-  <div class="col-card">
-    <div class="col-head"><span class="ico">策</span><span class="tt">政策与普法</span><span class="sub">国家政策与法律知识</span></div>
-    <div id="col-policy"></div>
-  </div>
-  <div class="col-card">
-    <div class="col-head"><span class="ico">学</span><span class="tt">工作教学</span><span class="sub">实用技能与方法</span></div>
-    <div id="col-teach"></div>
-  </div>
+  <div class="colp-list" id="colPList"></div>
 </div>
 <div class="citytoggle" id="cityToggle"><span class="ct">城市筛选 <span class="arrow">▼</span></span><span class="ctstate" id="cityState">展开</span></div>
 <div class="cityzone" id="cityZone">
@@ -245,7 +269,7 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 
 
-<div class="stat"><span>岗位 <b id="stTotal">__TOTAL__</b></span><span>城市 <b id="stCity">__CITIES__</b></span><span>当前显示 <b id="stShow">0</b></span><span style="margin-left:auto"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="onlyValid" checked> 仅看有效</label></span></div>
+<div class="stat"><span>岗位 <b id="stTotal">__TOTAL__</b></span><span>有效 <b id="stValid">0</b></span><span>失效 <b id="stOff">0</b></span><span>城市 <b id="stCity">__CITIES__</b></span><span>当前显示 <b id="stShow">0</b></span><span style="margin-left:auto;display:flex;align-items:center;gap:8px"><button class="favtoggle" id="favToggle" onclick="toggleFavMode()">★ 我的收藏 (<span id="favCount">0</span>)</button><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="onlyValid" checked> 仅看有效</label></span></div>
 
 <div class="list" id="list"></div>
 <div class="more-wrap" id="moreWrap" style="display:none"><button class="more-btn" id="moreBtn">加载更多岗位</button></div>
@@ -267,6 +291,10 @@ var JOBS = __JS_DATA__;
 var CITIES = __JS_CITIES__;
 var curLetter = '全部', curCity = '全部', kw = '';
 var onlyValid = true;
+var stValid = JOBS.filter(function(j){ return j.st!=='expired' && !(j.dl && fmtDeadline(j.dl)==='已截止'); }).length;
+var stOff = JOBS.length - stValid;
+document.getElementById('stValid').textContent = stValid;
+document.getElementById('stOff').textContent = stOff;
 
 // 字母条：默认收起，点击展开
 var cityToggle = document.getElementById('cityToggle');
@@ -297,6 +325,11 @@ document.getElementById('onlyValid').addEventListener('change', function(){
   render();
 });
 
+// 收藏按钮事件委托
+document.getElementById('list').addEventListener('click', function(ev){
+  var btn = ev.target.closest ? ev.target.closest('.favbtn') : null;
+  if(btn){ ev.preventDefault(); toggleFav(btn.getAttribute('data-c')); }
+});
 // 广告位渲染
 var ADS = {"top": [], "bottom": []};
 function renderAds(){
@@ -315,19 +348,59 @@ function renderAds(){
 renderAds();
 
 // 专栏渲染
-var COLS = {"social": [{"t": "就业辅导员：心智障碍者就业的“引路人”", "s": "湖南益阳，残联安排就业辅导员周妹一对一帮扶心智障碍青年刘望，联系企业提供切肉、穿串、打包等岗位，反复试岗后刘望选择了穿串工种，上岗前三天辅导员全程陪同，帮助他适应工作。", "u": "http://www.chinanews.com.cn/sh/2024/09-07/10282014.shtml", "o": "中国新闻网", "d": "2024-09-07"}, {"t": "辅助性就业基地：让心智障碍者有事做、有收入", "s": "青海西宁“嫩芽醇夏”残疾人辅助性就业基地，为有就业意愿的心智障碍者提供就业安置场所，并在咖啡体验馆等场景中融入社会化训练，吸纳爱心组织参与辅导培训，挖掘每个人的亮点。", "u": "http://www.news.cn/mrdx/20241202/4d8243e463bd4e89b6e3733016cc2fbd/c.html", "o": "新华每日电讯", "d": "2024-12-02"}, {"t": "“小黄车”流动摊位：心智障碍学员的咖啡与西点", "s": "宁波“首善有爱”助残服务综合体启动甬·爱“心”干线项目，利用地铁站点设置助残就业流动摊位，售卖心智障碍学员制作的咖啡、西点、文创产品，已在宁波地铁、机场、高校、博物馆等多地布设。", "u": "https://zjnews.zjol.com.cn/zjnews/202412/t20241203_30684754.shtml", "o": "浙江在线", "d": "2024-12-03"}, {"t": "重庆“星青年”就业驿站：第一份工作，3500元工资", "s": "36岁的莹莹在重庆南岸“小太阳就业驿站”找到人生中第一份工作，拿到3500元工资，用自己挣的钱买了新衣服。这里为成年心智障碍者提供就业岗位与技能支持。", "u": "https://epaper.cqcb.com/html/202512/04/content_510532.html", "o": "重庆晨报", "d": "2025-12-04"}], "doing": [{"t": "肯德基天使餐厅：为残障员工提供平等工作机会", "s": "肯德基天使餐厅自2012年在深圳诞生，已覆盖全国60多个城市、超70家门店，累计为数百位“天使员工”提供就业机会与成长空间。", "u": "http://www.gd.chinanews.com.cn/wap/2025/2025-12-03/445501.shtml", "o": "广东新闻网", "d": "2025-12-03"}, {"t": "星巴克“展心计划”：关注心智障碍青年融合就业", "s": "北京星巴克公益基金会启动“展心计划”，支持心智障碍青年融合就业。心智障碍者陈东海是星巴克中国的“阳光伙伴”，和咖啡师伙伴一起学习咖啡、与顾客交流。", "u": "https://www.starbucks.com.cn/about/news/zhanxinjihua/", "o": "星巴克中国", "d": "2021-10-27"}, {"t": "合肥5家企业：269名智力、精神残疾人实现就业", "s": "合肥市蜀山区残联对接维信诺电子、合肥轨道交通、合肥科技农商行等5家企业，提供270个岗位，安排269位智力、精神和重度肢体残疾人就业，岗位包括文创组装、分装包装、宣传单整理等。", "u": "https://www.workercn.cn/c/2026-01-26/8718314.shtml", "o": "中工网", "d": "2026-01-26"}, {"t": "北京工厂十余年吸纳上百名残疾人就业", "s": "2013年，工厂负责人郑雷伟招收了第一名智障女孩进厂，此后十余年间吸纳了上百名残疾人就业，最多时有五十多名残疾员工同时工作。", "u": "https://xinwen.bjd.com.cn/content/s682ec28ce4b0380e186c7900.html", "o": "京报网", "d": "2025-05-22"}], "company": [{"t": "喜憨儿洗车：中国残联推广的就业项目", "s": "“喜憨儿”是对心智障碍者的昵称。中国残联向各地推广“喜憨儿洗车”项目，南京江北新区太阳花乐园引入项目创办洗车中心，建立残疾人职业实训基地。", "u": "https://www.mca.gov.cn/n152/n166/c1662004999980005889/content.html", "o": "中华人民共和国民政部", "d": "2025-07-09"}, {"t": "中山14家企业“共建车间”：198名精神智力残疾人就业", "s": "中山市27家社区康园中心中，11家与企业建立“共建车间”，香山衡器、比亚迪电子、TCL空调、华艺灯饰等14家企业参与，为198名精神、智力、重度肢体残疾人解决就业。", "u": "https://epaper.zsnews.cn/epaper/zsrb/paperdate/20241204/part/4/articleid/2.html", "o": "中山日报", "d": "2024-12-04"}, {"t": "北京CHAO酒店：孤独症青年走上档案扫描员岗位", "s": "孤独症青年丁丁经就业服务评估后进入CHAO酒店前厅部实习，就业辅导员采用“密集支持—建立自然支持—渐退跟踪”的分阶段模式，他已完成6个月实习。另有孤独症青年通过培训成为档案扫描员并签订劳动合同。", "u": "https://www.bdpf.org.cn/cms68/web1459/subject/n1/n1459/n1551/n5605/n5612/c134035/content.html", "o": "北京市残疾人联合会", "d": "2026-08-16"}], "policy": [{"t": "残疾人就业保障金：企业招残疾人有分档优惠", "s": "用人单位安排残疾人就业比例达到1%（含）以上但未达当地规定比例的，按应缴费额50%缴纳残保金；1%以下的按90%缴纳；在职职工30人（含）以下的企业免征。安排残疾人就业越多，企业负担越轻。", "u": "https://www.gov.cn/zhengce/zhengceku/2023-03/28/content_5748750.htm", "o": "中国政府网", "d": "2023-03-26"}, {"t": "按比例安排残疾人就业：法律规定的比例是多少", "s": "《残疾人就业保障金征收使用管理办法》规定，用人单位安排残疾人就业比例不得低于本单位在职职工总数的1.5%，具体比例由各省规定；达不到的要缴纳保障金，超过的享受奖励。", "u": "https://www.gov.cn/zhengce/zhengceku/2015-09/15/content_5650063.htm", "o": "中国政府网", "d": "2015-09-09"}, {"t": "《促进残疾人就业三年行动方案（2025—2027年）》", "s": "国务院办公厅印发方案，实施残疾人劳动就业权益保障行动，要求依法依规纠治侵害残疾人就业权益的行为，各地审核安排残疾人就业人数不得额外提出户籍等限制条件。", "u": "https://www.gov.cn/zhengce/content/202506/content_7030053.htm", "o": "中国政府网", "d": "2025-06-25"}, {"t": "残疾人就业条例：保障残疾人的劳动权利", "s": "国家对残疾人就业实行集中就业与分散就业相结合的方针。机关、团体、企业事业单位和民办非企业单位应当按照规定比例安排残疾人就业，并为其选择适当的工种和岗位。", "u": "https://www.gov.cn/zhengce/content/2008-03/28/content_6646.htm", "o": "中国政府网", "d": "2008-03-28"}, {"t": "残疾人保障法：就业权益的重点保护", "s": "《中华人民共和国残疾人保障法》规定：国家实行按比例安排残疾人就业制度，不得在招聘、晋升、薪酬等环节歧视残疾人，不得因残疾降低工资待遇或单方解除劳动合同；集中安排残疾人就业的企业享受税收减免等优惠。", "u": "http://www.npc.gov.cn/npc/c2/c12435/201905/t20190521_276668.html", "o": "中国人大网", "d": "2018-11-05"}], "teach": [{"t": "福建厦门“三师协同”：可视化、场景化、分步化教学", "s": "针对智力残疾学生认知特点，厦门职高采用“三师协同”教学组，结合岗位实际需求，用可视化、场景化、分步化方法降低学习门槛，让学生听得懂、学得会。", "u": "https://m.thepaper.cn/newsDetail_forward_32483236", "o": "澎湃新闻", "d": "2026-01-28"}, {"t": "新化县“心青年”洗车技能培训：学会、记住、会用、熟练", "s": "培训采用“理论可视化+分步实操+晚间复盘”模式，专职讲师手把手教学，通过高频重复实操、耐心分层教学，考核合格直接上岗，残联开展在岗督导和复训。", "u": "https://cl.hnloudi.gov.cn/ldclh/xxdt/jcdt/202608/f203ff3990d140fab30faafc9598458a.shtml", "o": "娄底市残疾人联合会", "d": "2026-08-11"}, {"t": "广东慧灵：从职业康复训练到支持性就业", "s": "慧灵为心智障碍者提供职业康复训练（手工制作、清洁技能、缝纫操作等）、定岗培训（保洁员、快递员、服务生、家政、文员等）、社会适应能力训练（人际沟通、社交礼仪、情绪管理、金钱管理、交通出行等）以及支持性就业全程跟踪。", "u": "http://gd.hlcn.org/home/newsCate/detail/id/190.html", "o": "广东慧灵", "d": "2026-04-17"}, {"t": "校企协同：13家特教学校与企业共建就业阶梯", "s": "学校与130余家企业建立稳定共建关系，开设砖雕、漆画、酒店服务、中医艾灸等11门特色职教课程，近半数合作企业直接提供实习岗位，实习优秀者毕业即转正，实现学习—实习—就业无缝衔接。", "u": "https://news.gmw.cn/2025-12/16/content_38479090.htm", "o": "光明网", "d": "2025-12-16"}]};
-function renderCols(){
-  Object.keys(COLS).forEach(function(key){
-    var el = document.getElementById('col-'+key);
-    if(!el) return;
-    var items = COLS[key] || [];
-    if(!items.length){ el.innerHTML = '<div class="col-item" style="color:var(--sub);font-size:12px">内容筹备中，欢迎投稿</div>'; return; }
-    el.innerHTML = items.map(function(it){
-      return '<div class="col-item"><div class="t">'+it.t+'</div><div class="s">'+it.s+'</div><div class="src"><a href="'+it.u+'" target="_blank" rel="noopener">来源：'+it.o+' · '+it.d+'</a></div></div>';
-    }).join('');
+// ===== 专栏（数据由 articles.json 生成） =====
+var COLS_DATA = __COLS_DATA__;
+var COLDEF = {
+  'social':  {'ico':'化','tt':'社会化专栏','sub':'帮助心智障碍者融入社会'},
+  'doing':   {'ico':'行','tt':'他们正在做','sub':'各地机构与真实案例'},
+  'company': {'ico':'企','tt':'企业故事','sub':'在行动的企业'},
+  'policy':  {'ico':'策','tt':'政策与普法','sub':'国家政策与法律知识'},
+  'teach':   {'ico':'学','tt':'工作教学','sub':'实用技能与方法'}
+};
+function colCount(key){ return (COLS_DATA[key]||[]).length; }
+function renderColGrid(){
+  var el = document.getElementById('colGrid'); el.innerHTML = '';
+  Object.keys(COLDEF).forEach(function(key){
+    var def = COLDEF[key], cnt = colCount(key);
+    var d = document.createElement('div');
+    d.className = 'col-big';
+    d.innerHTML = '<div class="ico">'+def.ico+'</div><div class="tt">'+def.tt+'</div><div class="sub">'+def.sub+'</div><div class="cnt">'+cnt+' 篇内容</div><div class="go">进入专栏 ›</div>';
+    d.addEventListener('click', function(){ showCol(key); });
+    el.appendChild(d);
   });
 }
-renderCols();
+function showCol(key){
+  var def = COLDEF[key] || COLDEF['social'];
+  var items = COLS_DATA[key] || [];
+  document.getElementById('colPIco').textContent = def.ico;
+  document.getElementById('colPTt').textContent = def.tt;
+  document.getElementById('colPSub').textContent = items.length + ' 篇 · ' + def.sub;
+  var list = document.getElementById('colPList'); list.innerHTML = '';
+  if(!items.length){
+    list.innerHTML = '<div style="text-align:center;color:var(--sub);padding:40px 0;font-size:14px">内容筹备中，欢迎投稿</div>';
+  } else {
+    items.forEach(function(it){
+      var a = document.createElement('a');
+      a.className = 'colp-item';
+      a.href = it.u || '#'; a.target = '_blank'; a.rel = 'noopener';
+      var sum = it.s ? '<div class="s">'+it.s+'</div>' : '';
+      a.innerHTML = '<div class="t">'+it.t+'</div>'+sum+'<div class="meta"><span class="src">来源：'+it.o+'</span><span>'+it.d+'</span><span class="go">阅读全文 ›</span></div>';
+      list.appendChild(a);
+    });
+  }
+  document.getElementById('colPage').style.display = 'block';
+  document.getElementById('colPage').scrollTop = 0;
+  window.scrollTo(0,0);
+}
+function showHome(){
+  document.getElementById('colPage').style.display = 'none';
+}
+window.addEventListener('hashchange', function(){
+  var m = location.hash.match(/^#col\/(\w+)/);
+  if(m && COLDEF[m[1]]){ showCol(m[1]); } else { showHome(); }
+});
+renderColGrid();
+
 
 // 城市标签
 function renderCities(){
@@ -386,14 +459,28 @@ function sourceUrl(s){
 }
 
 var PAGE_SIZE = 10;
+var FAVS = [];
+try { FAVS = JSON.parse(localStorage.getItem('xy_favs') || '[]'); } catch(e){ FAVS = []; }
+var favMode = false;
+function saveFavs(){ try { localStorage.setItem('xy_favs', JSON.stringify(FAVS)); } catch(e){} document.getElementById('favCount').textContent = FAVS.length; }
+function isFav(cd){ return cd && FAVS.indexOf(cd) >= 0; }
+function toggleFav(cd){
+  if(!cd) return;
+  var i = FAVS.indexOf(cd);
+  if(i >= 0){ FAVS.splice(i,1); } else { FAVS.push(cd); }
+  saveFavs(); render();
+}
+function toggleFavMode(){ favMode = !favMode; document.getElementById('favToggle').classList.toggle('on', favMode); document.getElementById('favToggle').innerHTML = favMode ? '★ 返回全部' : '★ 我的收藏 (<span id="favCount">'+FAVS.length+'</span>)'; shownMax = PAGE_SIZE; render(); }
+saveFavs();
 var shownMax = PAGE_SIZE;
 
 function render(){
   var el = document.getElementById('list'); el.innerHTML = '';
   var shown = 0, total = 0;
   JOBS.forEach(function(j){
-    var isOff = j.dl && fmtDeadline(j.dl)==='已截止';
+    var isOff = j.st==='expired' || (j.dl && fmtDeadline(j.dl)==='已截止');
     if(onlyValid && isOff) return;
+    if(favMode && !isFav(j.cd)) return;
     if(curCity!=='全部' && j.c!==curCity) return;
     if(curLetter!=='全部'){
       var c = CITIES.filter(function(x){return x.name===j.c})[0];
@@ -411,8 +498,9 @@ function render(){
     var badge = isOff ? '<span class="badge off">已失效</span>' : '<span class="badge new">新发布</span>';
     if(!isOff && dl && dl.indexOf('天后截止')>=0) badge = '<span class="badge hot">即将截止</span>';
     var mhTag = j.mh ? '<span class="badge mh">心智障碍可投</span>' : '';
+    var favCls = isFav(j.cd) ? ' on' : '';
     card.innerHTML =
-      '<div class="row1"><div class="nm"><a class="jlink" target="_blank" rel="noopener" href="'+j.u+'">'+j.n+'</a></div>'+badge+'</div>'+
+      '<div class="row1"><div class="nm"><a class="jlink" target="_blank" rel="noopener" href="'+j.u+'">'+j.n+'</a></div><button class="favbtn'+favCls+'" data-c="'+j.cd+'" title="收藏">'+(isFav(j.cd)?'★':'☆')+'</button>'+badge+'</div>'+
       '<div class="org">'+j.o+'</div>'+
       (j.ds?'<div class="ds">适合残疾类型：'+j.ds+'</div>':'')+
       '<div class="info">'+
@@ -459,6 +547,7 @@ render();
 
 HTML_DOC = HTML_DOC.replace('__UPDATED__', esc(updated_at)).replace('__TOTAL__', str(total)).replace('__CITIES__', str(len(all_cities)))
 HTML_DOC = HTML_DOC.replace('__JS_DATA__', js_data).replace('__JS_CITIES__', js_cities)
+HTML_DOC = HTML_DOC.replace('__COLS_DATA__', '{"social": [{"t": "@各企事业单位  宿迁市残障融合与残疾人就业专题分享会期待您的加入", "s": "各企事业单位：\\n\\n为帮助企业管理层及用工负责人提升残障融合意识，掌握与残障同事有效沟通、协作的实务能力，营造包容、尊重的职场环境，宿迁市残联特邀专家开展专题分享会，助力企业做好残疾人用工管理，推动残疾人平等、稳定就业。", "o": "中国残联就业服务平台·公告", "d": "2026-05-27", "u": "https://www.cdpee.org.cn/news/newDetail?id=d7bdc3fe131a4b7dae6c242a68c0e245"}, {"t": "人民网评：让更多残疾人“好就业、就好业”", "s": "", "o": "中国残联·教育就业", "d": "2026-02-06", "u": "http://opinion.people.com.cn/n1/2026/0206/c223228-40660674.html"}, {"t": "重庆“星青年”就业驿站：第一份工作，3500元工资", "s": "36岁的莹莹在重庆南岸“小太阳就业驿站”找到人生中第一份工作，拿到3500元工资，用自己挣的钱买了新衣服。这里为成年心智障碍者提供就业岗位与技能支持。", "o": "重庆晨报", "d": "2025-12-04", "u": "https://epaper.cqcb.com/html/202512/04/content_510532.html"}, {"t": "西宁“智爱共富工坊”：40多名心智障碍者就业", "s": "青海西宁城东区“智爱共富工坊”吸纳40多名智力、精神障碍人士就业，提供手工艺品制作、包装等岗位，帮助他们自食其力、融入社会。", "o": "新华网青海", "d": "2025-12-04", "u": "https://qh.xinhuanet.com/20251204/4d6fc90aa12841a29d7a3e779dd1c76b/c.html"}, {"t": "苏州中德融创工场：为残障人士提供稳定就业", "s": "江苏太仓中德融创工场是一家专为心智障碍人士提供就业机会的社会企业，70多位残障人士在这里获得稳定工作和职业技能培训。", "o": "新华网江苏", "d": "2025-12-04", "u": "https://js.news.cn/20251204/98f9c0700a4d4cceae55a91735159107/c.html"}, {"t": "天津“星绘咖啡”：首批20名心智障碍员工", "s": "天津首家面向心智障碍者的咖啡店“星绘咖啡”开业，首批20名心智障碍员工经过系统培训后上岗，学习咖啡制作、顾客接待等技能。", "o": "中国新闻网", "d": "2025-12-03", "u": "https://m.chinanews.com/wap/detail/chs/zw/10526290.shtml"}, {"t": "【人社日课·10月14日】残疾人如何申请创业担保贷款？", "s": "【人社日课·10月14日】残疾人如何申请创业担保贷款？", "o": "中国残联就业服务平台·政策", "d": "2025-10-17", "u": "https://www.cdpee.org.cn/news/newDetail?id=6e1ecf70a9b7480180310bb08a4bd598"}, {"t": "“小黄车”流动摊位：心智障碍学员的咖啡与西点", "s": "宁波“首善有爱”助残服务综合体启动甬·爱“心”干线项目，利用地铁站点设置助残就业流动摊位，售卖心智障碍学员制作的咖啡、西点、文创产品。", "o": "浙江在线", "d": "2024-12-03", "u": "https://zjnews.zjol.com.cn/zjnews/202412/t20241203_30684754.shtml"}, {"t": "辅助性就业基地：让心智障碍者有事做、有收入", "s": "青海西宁“嫩芽醇夏”残疾人辅助性就业基地，为有就业意愿的心智障碍者提供就业安置场所，并在咖啡体验馆等场景中融入社会化训练，吸纳爱心组织参与辅导培训。", "o": "新华每日电讯", "d": "2024-12-02", "u": "http://www.news.cn/mrdx/20241202/4d8243e463bd4e89b6e3733016cc2fbd/c.html"}, {"t": "就业辅导员：心智障碍者就业的“引路人”", "s": "湖南益阳，残联安排就业辅导员周妹一对一帮扶心智障碍青年刘望，联系企业提供切肉、穿串、打包等岗位，反复试岗后刘望选择了穿串工种，上岗前三天辅导员全程陪同，帮助他适应工作。", "o": "中国新闻网", "d": "2024-09-07", "u": "http://www.chinanews.com.cn/sh/2024/09-07/10282014.shtml"}, {"t": "杭州“创新多方共建机制打造农村残疾人就业新模式”成功入选第四届全球减贫案例", "s": "", "o": "中国残联·教育就业", "d": "2023-12-01", "u": "https://www.chinatimes.net.cn/article/131703.html"}, {"t": "湖南召开残疾人定向招录职位体检条件论证会", "s": "", "o": "中国残联·教育就业", "d": "2022-11-28", "u": "https://hunan.cdpee.org.cn/news/newDetail?id=402885588485310b0184ae2bb6d00718"}, {"t": "多部门共同部署促进残疾人就业三年行动", "s": "", "o": "中国残联·教育就业", "d": "2022-04-20", "u": "https://www.cdpf.org.cn/xwzx/clyw2/d594f4d70bdc4722b4021ce9922135d7.htm"}, {"t": "“残疾人也可以活出精彩的人生”——以习近平同志为核心的党中央关心残疾人事业纪实", "s": "", "o": "中国残联·教育就业", "d": "2022-03-02", "u": "http://www.news.cn/politics/2022-03/01/c_1128428061.htm"}, {"t": "多名残疾人在第四届“中国创翼”创业创新大赛中获奖", "s": "", "o": "中国残联·教育就业", "d": "2020-12-11", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/../jyfp2/gzdtjyfp/ccc023f0289c4a31857a56a2b0b43193.htm"}, {"t": "中国青年报连载刊文：《习校长破格录取身体残疾的我》", "s": "", "o": "中国残联·教育就业", "d": "2020-05-27", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/../jy2/gzdtjy/3771abacebe34a9497a0e21435ca8324.htm"}], "doing": [{"t": "知行合一践初心 精准施策稳就业 ——山东残疾人就业服务的“实”字诀", "s": "在山东，有一群人的就业之路，牵动着省残疾人就业指导中心（以下简称“中心”）每一位工作人员的心。近年来，中心把“实”字贯穿始终——摸清底数、分类施策、跟进到底，不搞花架子，不看虚数字，用脚步丈量需求，用真心换来信任，一步步把助残就业的政策暖意", "o": "中国残联就业服务平台", "d": "2026-09-10", "u": "https://www.cdpee.org.cn/news/newDetail?id=72918fcf1d9e4cb3a6673fd62e73e03c"}, {"t": "杭州海洋公园：两名“心青年”全职就业", "s": "杭州长乔海洋公园为心智障碍青年提供全职岗位，两名“心青年”在检票、引导等岗位稳定工作，企业还安排专人带教适应。", "o": "中国新闻网", "d": "2026-05-16", "u": "https://wap.chinanews.com/wap/detail/chs/zw/10622457.shtml"}, {"t": "厦门“星空咖啡”：15名孤独症青年就业", "s": "厦门首家孤独症青年就业咖啡店“星空咖啡”落地，15名孤独症青年经过培训上岗，在咖啡制作、门店服务岗位实现就业。", "o": "中国人权网", "d": "2026-04-03", "u": "https://www.humanrights.cn/2026/04/03/d5c1a0c865964141b26b1ae8e9382e26.html"}, {"t": "合肥5家企业：269名智力、精神残疾人实现就业", "s": "合肥市蜀山区残联对接维信诺电子、合肥轨道交通、合肥科技农商行等5家企业，提供270个岗位，安排269位智力、精神和重度肢体残疾人就业。", "o": "中工网", "d": "2026-01-26", "u": "https://www.workercn.cn/c/2026-01-26/8718314.shtml"}, {"t": "2025年湖南省残疾人创业孵化基地入驻项目公示", "s": "根据湖南省残疾人劳动就业服务中心《关于选拔优秀残疾人创业项目入驻孵化基地的公告》要求，经公开征集、自主申报、资格审查、路演比试、专家评审、实情考察、综合评价，湖南省残疾人劳动就业服务中心决定，以下20个创业项目入驻孵化基地。", "o": "就业管理部", "d": "2026-01-08", "u": "https://www.cdpee.org.cn/news/newDetail?id=aa36c1e2928b42ef9a3e175451274ceb"}, {"t": "肯德基天使餐厅：为残障员工提供平等工作机会", "s": "肯德基天使餐厅自2012年在深圳诞生，已覆盖全国60多个城市、超70家门店，累计为数百位“天使员工”提供就业机会与成长空间。", "o": "广东新闻网", "d": "2025-12-03", "u": "http://www.gd.chinanews.com.cn/wap/2025/2025-12-03/445501.shtml"}, {"t": "北京工厂十余年吸纳上百名残疾人就业", "s": "2013年，工厂负责人郑雷伟招收了第一名智障女孩进厂，此后十余年间吸纳了上百名残疾人就业，最多时有五十多名残疾员工同时工作。", "o": "京报网", "d": "2025-05-22", "u": "https://xinwen.bjd.com.cn/content/s682ec28ce4b0380e186c7900.html"}, {"t": "促进残疾人就业，实用服务一图get！", "s": "近日，人力资源社会保障部、中国残疾人联合会印发《关于加强就业服务促进残疾人就业有关事项的通知》。带您一图看懂——", "o": "中国残联就业服务平台·政策", "d": "2024-03-22", "u": "https://www.cdpee.org.cn/news/newDetail?id=96398ec97ff645268d8f6284f11b2d2e"}, {"t": "“全国残疾人就业服务示范基地锦绣工坊”揭牌仪式举行", "s": "", "o": "中国残联·教育就业", "d": "2023-11-16", "u": "https://www.sznews.com/news/content/2023-11/15/content_30588698.htm"}, {"t": "老有所养、残有所扶——国家推进基本养老服务体系建设工作将惠及1700多万残疾老年人", "s": "", "o": "中国残联·教育就业", "d": "2023-05-24", "u": "https://www.cdpf.org.cn/xwzx/clyw2/42b091f4e09e44a1a698798c73712402.htm"}, {"t": "“精准施策+精心服务”破解残疾人就业难题", "s": "", "o": "中国残联·教育就业", "d": "2022-10-28", "u": "https://topics.gmw.cn/2022-10/27/content_36119631.htm"}, {"t": "周长奎调研残疾人就业服务工作", "s": "", "o": "中国残联·教育就业", "d": "2022-07-05", "u": "https://www.cdpf.org.cn/xwzx/clyw2/5f15ade082334bf4aac702a94ea7c866.htm"}, {"t": "中国残联部署2022年全国高校残疾人毕业生就业暨残疾人就业服务工作", "s": "", "o": "中国残联·教育就业", "d": "2022-05-30", "u": "https://www.cdpf.org.cn/xwzx/clyw2/b33aa396fa054b11bb9650eb7208d4e5.htm"}, {"t": "星巴克“展心计划”：关注心智障碍青年融合就业", "s": "北京星巴克公益基金会启动“展心计划”，支持心智障碍青年融合就业。心智障碍者陈东海是星巴克中国的“阳光伙伴”，和咖啡师伙伴一起学习咖啡、与顾客交流。", "o": "星巴克中国", "d": "2021-10-27", "u": "https://www.starbucks.com.cn/about/news/zhanxinjihua/"}, {"t": "教就部组织开展残疾人就业和社会保障“邀访•倾听”活动", "s": "", "o": "中国残联·教育就业", "d": "2021-02-22", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/edcfb3dd443c4ec9a4ef5c51c0a0d469.htm"}, {"t": "教就部组织开展残疾人就业和社会保障“邀访·倾听”活动", "s": "", "o": "中国残联·教育就业", "d": "2020-12-16", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/29e65f22bad045adb709e42bef032d40.htm"}], "company": [{"t": "津彩启航｜天津市2026年秋季残疾人专场招聘会直播带岗9月16日开播", "s": "金秋送岗，津彩启航。为深入贯彻落实党中央、国务院关于促进高质量充分就业的决策部署和市委、市政府工作要求，搭建用人单位招聘和残疾人求职服务平台，帮助更多残疾人实现就业，由天津市残疾人社会保障和就业服务中心主办的“津彩启航 2026年秋季残疾人", "o": "中国残联就业服务平台", "d": "2026-09-15", "u": "https://www.cdpee.org.cn/news/newDetail?id=192aedf9928c463d930736a8cddbcbd0"}, {"t": "2026年河北省应届高校残疾人毕业生 专场招聘会成功举办", "s": "为深入落实《促进残疾人就业三年行动方案（2025？2027年）》要求，扎实做好高校残疾人毕业生就业帮扶，打通供需对接壁垒，高校残疾人毕业生实现更加充分更高质量就业，9月10日，2026年河北省应届高校残疾人毕业生专场招聘会顺利举办。", "o": "中国残联就业服务平台", "d": "2026-09-11", "u": "https://www.cdpee.org.cn/news/newDetail?id=feb442d7eb7448ac9bf7d74e35bf9337"}, {"t": "让长大的“星星”就业之路越走越宽", "s": "报道关注大龄孤独症群体就业：从岗位开发、就业支持到企业接纳，多地探索让长大的星星们有尊严地工作、生活。", "o": "中国新闻网", "d": "2026-08-25", "u": "https://m.chinanews.com/wap/detail/chs/zw/10683532.shtml"}, {"t": "北京CHAO酒店：孤独症青年走上档案扫描员岗位", "s": "孤独症青年丁丁经就业服务评估后进入CHAO酒店前厅部实习，就业辅导员采用“密集支持—建立自然支持—渐退跟踪”的分阶段模式，他已完成6个月实习。", "o": "北京市残疾人联合会", "d": "2026-08-16", "u": "https://www.bdpf.org.cn/cms68/web1459/subject/n1/n1459/n1551/n5605/n5612/c134035/content.html"}, {"t": "当“星星的孩子”走向职场", "s": "人民网报道：越来越多孤独症青年在就业辅导员支持下走进企业，从保洁、理货到文创制作，星星的孩子正在被更多职场接纳。", "o": "人民网", "d": "2026-04-02", "u": "https://society.people.com.cn/n1/2026/0402/c428181-40693857.html"}, {"t": "喜憨儿洗车：中国残联推广的就业项目", "s": "“喜憨儿”是对心智障碍者的昵称。中国残联向各地推广“喜憨儿洗车”项目，南京江北新区太阳花乐园引入项目创办洗车中心，建立残疾人职业实训基地。", "o": "中华人民共和国民政部", "d": "2025-07-09", "u": "https://www.mca.gov.cn/n152/n166/c1662004999980005889/content.html"}, {"t": "中山14家企业“共建车间”：198名精神智力残疾人就业", "s": "中山市27家社区康园中心中，11家与企业建立“共建车间”，香山衡器、比亚迪电子、TCL空调、华艺灯饰等14家企业参与，为198名精神、智力、重度肢体残疾人解决就业。", "o": "中山日报", "d": "2024-12-04", "u": "https://epaper.zsnews.cn/epaper/zsrb/paperdate/20241204/part/4/articleid/2.html"}, {"t": "四川省达州市四大班子带头面向残疾人招聘雇员", "s": "", "o": "中国残联·教育就业", "d": "2022-03-11", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/51f7e984f3f14fb5a5958a0d0125ab1f.htm"}], "policy": [{"t": "国务院残疾人工作委员会关于印发《残疾人保障和发展“十五五”规划》的通知", "s": "各省、自治区、直辖市人民政府，国务院各部委、各直属机构：\\n\\n经国务院同意，现将《残疾人保障和发展“十五五”规划》印发给你们，请认真贯彻执行。\\n\\n\\n\\n国务院残疾人工作委员会\\n\\n2026年7月1日", "o": "中国残联就业服务平台·公告", "d": "2026-07-06", "u": "https://www.cdpee.org.cn/news/newDetail?id=c17da1d478e94454b7df26e3d4dd6f44"}, {"t": "《残疾人保障和发展“十五五”规划》", "s": "残疾人是推进中国式现代化的重要力量，也是需要格外关心、格外关注的特殊困难群体。为深入贯彻落实党中央、国务院决策部署，提升残疾人保障和发展能力，根据《中华人民共和国残疾人保障法》和《中华人民共和国国民经济和社会发展第十五个五年规划纲要》，制定", "o": "国务院残疾人工作委员会", "d": "2026-07-06", "u": "https://www.cdpee.org.cn/news/newDetail?id=5b117ed39aec4c1f937c50a6d2b710c7"}, {"t": "利好残疾人！《实施就业优先战略“十五五”规划》印发", "s": "日前，国务院印发《实施就业优先战略“十五五”规划》（以下简称《规划》），明确了“十五五”时期深入实施就业优先战略、促进高质量充分就业的思路目标、重点任务和政策举措。", "o": "中国残联就业服务平台·政策", "d": "2026-07-06", "u": "https://www.cdpee.org.cn/news/newDetail?id=d558e024798d45ce8937e0f486167558"}, {"t": "天津市残疾人就业保障金征收和就业审核政策二十问", "s": "天津市残联详解残保金征收、按比例就业审核、超比例奖励等政策：超比例安排残疾人就业的企业，按每超1人每年最高9600元标准给予奖励；新招用残疾人就业有补贴。", "o": "天津市残疾人联合会", "d": "2026-05-06", "u": "http://www.tjdpf.org.cn/system/2026/05/06/030098685.shtml"}, {"t": "全国高校残疾人毕业生就业创业支持政策清单", "s": "全国高校残疾人毕业生就业创业支持政策清单", "o": "中国残联就业服务平台·政策", "d": "2026-04-22", "u": "https://www.cdpee.org.cn/news/newDetail?id=6a6e8f3b975741b68db978f2a7f0c112"}, {"t": "湖南省残疾人联合会关于开展省本级2025年度残疾人按比例就业情况联网认证工作的通告", "s": "南省残疾人联合会关于开展省本级2025年度残疾人按比例就业情况联网认证工作的通告", "o": "中国残联就业服务平台·公告", "d": "2026-03-02", "u": "https://www.cdpee.org.cn/news/newDetail?id=11d7ea7d1dd04e45af9e7c0f016bf878"}, {"t": "中国残联办公厅关于印发残疾人托付安置典型案例的通知", "s": "", "o": "中国残联·教育就业", "d": "2026-02-02", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/c93f8ace36a24ab1a0fdc6a6da6e8532.htm"}, {"t": "民政部、中国残联召开全国重度残疾人托养照护服务工作推进视频会", "s": "", "o": "中国残联·教育就业", "d": "2025-11-27", "u": "https://www.mca.gov.cn/n152/n164/c1662004999980007810/content.html"}, {"t": "福建省人民政府办公厅关于印发《福建省促进残疾人就业三年行动方案（2025—2027年）》的通知", "s": "", "o": "中国残联·教育就业", "d": "2025-10-14", "u": "http://www.fujian.gov.cn/zwgk/ztzl/zswzjjylzzccs/sj/202510/t20251011_7019955.htm"}, {"t": "国新办举行国务院政策例行吹风会 介绍《促进残疾人就业三年行动方案（2025-2027年）》有关情况", "s": "", "o": "中国残联·教育就业", "d": "2025-09-01", "u": "http://www.scio.gov.cn/live/2025/36751/index.html"}, {"t": "国务院办公厅印发《促进残疾人就业三年行动方案（2025－2027年）》", "s": "", "o": "中国残联·教育就业", "d": "2025-09-01", "u": "https://www.cdpf.org.cn/xwzx/clyw2/0461768453cd4c52a99375932199e862.htm"}, {"t": "国务院办公厅关于加强重度残疾人 托养照护服务的意见", "s": "", "o": "中国残联·教育就业", "d": "2025-07-28", "u": "https://www.gov.cn/zhengce/content/202507/content_7034631.htm"}, {"t": "《促进残疾人就业三年行动方案（2025—2027年）》", "s": "残疾人是推进中国式现代化的重要力量，也是需要格外关心、格外关注的特殊困难群体。为持续提升残疾人公共服务质量，进一步加强残疾人就业帮扶，促进残疾人实现较为充分较高质量的就业，共享现代化发展成果，制定本方案。", "o": "中国残联就业服务平台·政策", "d": "2025-06-30", "u": "https://www.cdpee.org.cn/news/newDetail?id=519bc2ad43e54cc48a29b2371480fa28"}, {"t": "《促进残疾人就业三年行动方案（2025—2027年）》", "s": "国务院办公厅印发方案，实施残疾人劳动就业权益保障行动，要求依法依规纠治侵害残疾人就业权益的行为，各地审核安排残疾人就业人数不得额外提出户籍等限制条件。", "o": "中国政府网", "d": "2025-06-25", "u": "https://www.gov.cn/zhengce/content/202506/content_7030053.htm"}, {"t": "北京市用人（工）单位招用残疾人岗位补贴和社会保险补贴政策问答", "s": "北京市用人（工）单位招用残疾人岗位补贴和社会保险补贴政策问答", "o": "中国残联就业服务平台·政策", "d": "2024-11-21", "u": "https://www.cdpee.org.cn/news/newDetail?id=299bb25bc47e42edacbd475c838426ea"}, {"t": "文创携手助残，湖南省首届托养机构文创设计大赛圆满结束", "s": "", "o": "中国残联·教育就业", "d": "2023-12-11", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/eef7b177e4944cd5a025111321da2d7c.htm"}, {"t": "八部门印发通知加大对农村残疾人就业增收的帮扶力度", "s": "", "o": "中国残联·教育就业", "d": "2023-05-24", "u": "https://www.cdpf.org.cn/xwzx/clyw2/9006ecda153e43dab83bb9c38cd2b873.htm"}, {"t": "残疾人就业保障金：企业招残疾人有分档优惠", "s": "用人单位安排残疾人就业比例达到1%（含）以上但未达当地规定比例的，按应缴费额50%缴纳残保金；1%以下的按90%缴纳；在职职工30人（含）以下的企业免征。", "o": "中国政府网", "d": "2023-03-26", "u": "https://www.gov.cn/zhengce/zhengceku/2023-03/28/content_5748750.htm"}, {"t": "三部门共同推进残疾人两项补贴制度完善和管理服务转型升级", "s": "", "o": "中国残联·教育就业", "d": "2021-09-16", "u": "https://www.cdpf.org.cn/xwzx/clyw2/3dcbff49a09e443295d01a406eaaf074.htm"}, {"t": "《“十四五”阳光家园计划—智力、精神和重度肢体残疾人托养服务项目实施方案》的通知", "s": "", "o": "中国残联·教育就业", "d": "2021-09-15", "u": "https://www.cdpf.org.cn/zwgk/ghjh/0e3b2577ef46485c88c017ba5d5c69c8.htm"}, {"t": "人民日报 残疾人两项补贴将实行“跨省通办”", "s": "", "o": "中国残联·教育就业", "d": "2021-04-20", "u": "https://www.cdpf.org.cn//ywpd/xcwh/mtjjxwb/d02aebd6be0a4ed6b3e4b4e4ec502b2f.htm"}, {"t": "全国残疾人教育就业扶贫社会保障和托养工作会召开", "s": "", "o": "中国残联·教育就业", "d": "2021-02-23", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/../shbz2/gzdtshbz/50fff0d617b3496883190730366f566a.htm"}, {"t": "残疾人保障法：就业权益的重点保护", "s": "《中华人民共和国残疾人保障法》规定：国家实行按比例安排残疾人就业制度，不得在招聘、晋升、薪酬等环节歧视残疾人，不得因残疾降低工资待遇或单方解除劳动合同。", "o": "中国人大网", "d": "2018-11-05", "u": "http://www.npc.gov.cn/npc/c2/c12435/201905/t20190521_276668.html"}, {"t": "按比例安排残疾人就业：法律规定的比例是多少", "s": "《残疾人就业保障金征收使用管理办法》规定，用人单位安排残疾人就业比例不得低于本单位在职职工总数的1.5%，达不到的要缴纳保障金，超过的享受奖励。", "o": "中国政府网", "d": "2015-09-09", "u": "https://www.gov.cn/zhengce/zhengceku/2015-09/15/content_5650063.htm"}, {"t": "残疾人就业条例：保障残疾人的劳动权利", "s": "国家对残疾人就业实行集中就业与分散就业相结合的方针。机关、团体、企业事业单位和民办非企业单位应当按照规定比例安排残疾人就业，并为其选择适当的工种和岗位。", "o": "中国政府网", "d": "2008-03-28", "u": "https://www.gov.cn/zhengce/content/2008-03/28/content_6646.htm"}], "teach": [{"t": "2026年山东省脊髓损伤残疾人职业技能培训班在济南举办", "s": "8月20日到9月9日，2026年全省脊髓损伤残疾人职业技能培训班在济南举办。省残联党组书记、理事长邹斌芳到培训基地看望慰问学员。来自全省各地的28名脊髓损伤学员参加培训。", "o": "中国残联就业服务平台", "d": "2026-09-10", "u": "https://www.cdpee.org.cn/news/newDetail?id=8a78e09521ab4ee98c837b0dcae71f8e"}, {"t": "新化县“心青年”洗车技能培训：学会、记住、会用、熟练", "s": "培训采用“理论可视化+分步实操+晚间复盘”模式，专职讲师手把手教学，通过高频重复实操、耐心分层教学，考核合格直接上岗。", "o": "娄底市残疾人联合会", "d": "2026-08-11", "u": "https://cl.hnloudi.gov.cn/ldclh/xxdt/jcdt/202608/f203ff3990d140fab30faafc9598458a.shtml"}, {"t": "浙江：为孤独症学生设计“从结构化到弹性化”职业课程", "s": "浙江特殊教育职业学院与杨绫子学校等合作，以中西面点工艺为试点，为孤独症学生设计阶梯式进阶路径，中职练基础、高职学应变，配套《咖啡制作》等校本教材。", "o": "中国教师报", "d": "2026-07-15", "u": "http://chinateacher.jyb.cn/zgjsb/html/2026-07/15/content_649510.htm"}, {"t": "河北涞水特教：打造职教课程与实训场地", "s": "涞水县特教学校开设现代家政服务与管理、安全保卫服务两个职教专业，建成模拟超市、模拟宾馆、实操厨房、安保训练区等实训场地，超九成初中毕业残障学生升入职高。", "o": "人民网河北", "d": "2026-07-02", "u": "http://he.people.com.cn/n2/2026/0702/c192235-41627912.html"}, {"t": "广东慧灵：从职业康复训练到支持性就业", "s": "慧灵为心智障碍者提供职业康复训练、定岗培训、社会适应能力训练以及支持性就业全程跟踪，帮助其掌握保洁、快递、服务等岗位技能。", "o": "广东慧灵", "d": "2026-04-17", "u": "http://gd.hlcn.org/home/newsCate/detail/id/190.html"}, {"t": "福建厦门“三师协同”：可视化、场景化、分步化教学", "s": "针对智力残疾学生认知特点，厦门职高采用“三师协同”教学组，结合岗位实际需求，用可视化、场景化、分步化方法降低学习门槛，让学生听得懂、学得会。", "o": "澎湃新闻", "d": "2026-01-28", "u": "https://m.thepaper.cn/newsDetail_forward_32483236"}, {"t": "校企协同：13家特教学校与企业共建就业阶梯", "s": "学校与130余家企业建立稳定共建关系，开设砖雕、漆画、酒店服务、中医艾灸等11门特色职教课程，近半数合作企业直接提供实习岗位。", "o": "光明网", "d": "2025-12-16", "u": "https://news.gmw.cn/2025-12/16/content_38479090.htm"}, {"t": "湖南省残疾人劳动就业服务中心关于采购2025年残疾人培训服务评审结果的公示", "s": "根据《湖南省残疾人劳动就业服务中心关于采购 2025年残疾人培训服务的公告》，湖南省残疾人劳动就业服务中心（以下简称中心）于2025年12月1日对2期培训服务项目进行了评审。经评审小组综合打分评定，确定湖南省数字商务协会为电商培训实训承接候", "o": "培训部", "d": "2025-12-01", "u": "https://www.cdpee.org.cn/news/newDetail?id=a1cf5f02c3ac49838d7acc14ba825190"}, {"t": "第七届全国残疾人职业技能竞赛暨第四届残疾人展能节筹备工作正式启动", "s": "", "o": "中国残联·教育就业", "d": "2022-08-05", "u": "https://www.cdpf.org.cn/xwzx/clyw2/f613b650836548c588da3e827d54add8.htm"}, {"t": "中国残联部署残疾人教育就业和社会保障重点工作", "s": "", "o": "中国残联·教育就业", "d": "2022-06-22", "u": "https://www.cdpf.org.cn/xwzx/clyw2/999245e5bf4b42b29ed24bb466e33f71.htm"}, {"t": "2020年全国残疾人岗位精英职业技能竞赛暨全国残疾人就业服务机构工作人员职业指导竞赛在深圳举办", "s": "", "o": "中国残联·教育就业", "d": "2021-02-23", "u": "https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/../jyfp2/gzdtjyfp/429560d80c1b44a39bd65c178e1e028e.htm"}]}')
 # 心智障碍可投数
 HTML_DOC = HTML_DOC.replace('心智障碍可投  条岗位', '心智障碍可投 ' + str(total_mh) + ' 条岗位')
 

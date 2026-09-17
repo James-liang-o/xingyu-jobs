@@ -172,10 +172,11 @@ def fetch_prov_api(host, pages=3):
         time.sleep(0.8)
     return jobs
 
-def fetch_national_api(pages=150, page_size=50):
-    """爬中国残联就业服务平台动态接口（公开数据）：全国岗位，低频翻页"""
+def fetch_national_api(pages=60, page_size=500):
+    """爬中国残联就业服务平台动态接口（公开数据）：全国岗位，全量翻页"""
     jobs = []
-    base = 'https://www.cdpee.org.cn/api/app-jycy-job/getHomeJob'
+    base = 'https://www.cdpee.org.cn/api/app-jycy-job/querySearchJobInfo'
+    seen_ids = set()
     for p in range(1, pages + 1):
         try:
             q = urllib.parse.urlencode({'pageNum': p, 'pageSize': page_size})
@@ -190,7 +191,13 @@ def fetch_national_api(pages=150, page_size=50):
         recs = data.get('records', [])
         if not recs:
             break
+        new_cnt = 0
         for rec in recs:
+            rid = str(rec.get('id', ''))
+            if rid in seen_ids:
+                continue
+            seen_ids.add(rid)
+            new_cnt += 1
             ci = rec.get('companyInfo') or {}
             prov = rec.get('provinceid', '') or ''
             city = rec.get('cityid', '') or ''
@@ -212,6 +219,8 @@ def fetch_national_api(pages=150, page_size=50):
                 'url': 'https://www.cdpee.org.cn/job/jobDetail?id=' + str(rec.get('id', '')),
                 'published': rec.get('createTime', ''),
                 'updated': rec.get('updateTime', ''), 'deadline': rec.get('endTime', ''),
+                'status': 'active' if str(rec.get('jobStatus', '1')) == '1' else 'expired',
+                'job_status': rec.get('jobStatus', '1'),
                 'dis_types': dis_types, 'dis_str': dis_str, 'is_mh': is_mh,
             })
         time.sleep(0.8)
@@ -242,9 +251,21 @@ def pinyin_first_letter(s):
 
 def main():
     jobs = []
+    # ===== 读取上一轮数据（用于增量归档失效岗位） =====
+    prev = {}
+    try:
+        with open('jobs_national.json', encoding='utf-8') as f:
+            prev_data = json.load(f)
+        for j in prev_data.get('jobs', []):
+            if j.get('code'):
+                prev[str(j['code'])] = j
+        print('上一轮岗位:', len(prev))
+    except Exception as e:
+        print('无上一轮数据（首次运行）:', e)
+
     # ===== 来源1：中国残联动态接口（全国） =====
-    print('[1/6] 中国残联动态接口（全国，翻页抓取，仅保留心智障碍）...')
-    api_jobs = fetch_national_api(pages=300, page_size=50)
+    print('[1/6] 中国残联动态接口（全国，全量翻页，仅保留心智障碍）...')
+    api_jobs = fetch_national_api(pages=60, page_size=500)
     # 只保留心智障碍可投岗位（智力残疾 / 精神残疾）
     api_mh = [j for j in api_jobs if j.get('is_mh')]
     jobs.extend(api_mh)
@@ -321,6 +342,22 @@ def main():
             'url': 'https://www.jyfw.org.cn/', 'published': '',
         })
 
+    # ===== 增量归档：上一轮有、本轮未出现的岗位标记失效并保留 =====
+    fresh = set()
+    for j in jobs:
+        if j.get('code'):
+            fresh.add(str(j['code']))
+    expired = 0
+    for code, old in prev.items():
+        if code not in fresh:
+            old = dict(old)
+            old['status'] = 'expired'
+            old['name'] = (old.get('name') or '') + ('【已失效】' if '【已失效】' not in (old.get('name') or '') else '')
+            jobs.append(old)
+            expired += 1
+    if expired:
+        print('归档失效岗位:', expired, '条')
+
     # 按城市分组（拼音首字母索引）
     city_map = {}
     for j in jobs:
@@ -368,7 +405,8 @@ def main():
         w.writerow(['省份', '城市', '岗位名称', '单位', '地点', '学历', '招聘人数', '适合残疾类型', '心智障碍可投', '联系方式', '来源', '原链接', '发布日期'])
         for j in jobs:
             w.writerow([j.get('prov', ''), j.get('city', ''), j['name'], j['org'], j['loc'], j['edu'], j['num'], j.get('dis_str', ''), '是' if j.get('is_mh') else '', j['contact'], j['source'], j['url'], j['published']])
-    print('总计:', len(jobs), '条 | 覆盖城市:', len(city_map), '个 | 心智障碍可投:', out['total_mh'], '-> jobs_national.json / jobs_national.csv')
+    active = sum(1 for j in jobs if j.get('status') != 'expired')
+    print('总计:', len(jobs), '条 | 覆盖城市:', len(city_map), '个 | 心智障碍可投:', out['total_mh'], '| 有效:', active, '失效:', len(jobs)-active, '-> jobs_national.json / jobs_national.csv')
 
 if __name__ == '__main__':
     main()
