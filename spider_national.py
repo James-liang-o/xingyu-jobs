@@ -93,6 +93,85 @@ def parse_xls_roles(data):
         })
     return roles
 
+def fetch_hubei_api(pages=3):
+    """爬湖北省残疾人求职招聘信息平台（官方公开接口）"""
+    jobs = []
+    for p in range(1, pages + 1):
+        try:
+            q = urllib.parse.urlencode({'pageNum': p, 'size': 50})
+            url = 'https://www.hbcjrjy.cn/prod-api/open/Jobhb/getLatestPositionList?' + q
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.hbcjrjy.cn/'})
+            with urllib.request.urlopen(req, timeout=30, context=CTX) as r:
+                body = json.loads(r.read().decode('utf-8', errors='ignore'))
+        except Exception as e:
+            print('  湖北API ERR page %d: %s' % (p, e))
+            time.sleep(2)
+            continue
+        recs = body.get('data') or []
+        if not recs:
+            break
+        for rec in recs:
+            # 湖北接口返回字段：job 岗位名 / companyName / createTime / jobInfo(HTML职责)
+            duty = re.sub(r'<[^>]+>', ' ', rec.get('jobInfo', '') or '')
+            duty = re.sub(r'\s+', ' ', duty).strip()
+            jobs.append({
+                'code': str(rec.get('jobId', '')), 'owner': '', 'org': rec.get('companyName', ''),
+                'name': rec.get('job', ''), 'type': '',
+                'duty': duty[:200],
+                'num': '', 'edu': '',
+                'major': '', 'loc': '湖北省', 'prov': '湖北省', 'city': '', 'dist': '',
+                'contact': '见原平台', 'source': '湖北省残疾人求职招聘信息平台',
+                'url': 'https://www.hbcjrjy.cn/prod-api/open/Jobhb/getLatestPositionList',
+                'published': rec.get('createTime', ''), 'updated': rec.get('updateTime', ''),
+                'deadline': '',
+                'dis_types': [], 'dis_str': '', 'is_mh': False,
+            })
+        time.sleep(0.8)
+    return jobs
+
+def fetch_prov_api(host, pages=3):
+    """爬省级残联就业平台（cdpee 同源系统，getHomeJob 接口）"""
+    jobs = []
+    base = host + '/api/app-jycy-job/getHomeJob'
+    for p in range(1, pages + 1):
+        try:
+            q = urllib.parse.urlencode({'pageNum': p, 'pageSize': 50})
+            req = urllib.request.Request(base + '?' + q, headers={'User-Agent': 'Mozilla/5.0', 'Referer': host + '/'})
+            with urllib.request.urlopen(req, timeout=30, context=CTX) as r:
+                body = json.loads(r.read().decode('utf-8', errors='ignore'))
+        except Exception as e:
+            print('  省级API ERR %s page %d: %s' % (host, p, e))
+            time.sleep(2)
+            continue
+        data = body.get('data') or {}
+        recs = data.get('records', [])
+        if not recs:
+            break
+        for rec in recs:
+            ci = rec.get('companyInfo') or {}
+            prov = rec.get('provinceid', '') or ''
+            city = rec.get('cityid', '') or ''
+            dist = rec.get('threeCityid', '') or ''
+            loc = (prov + '·' + city + ('·' + dist if dist and dist not in (prov, city) else '')).strip('·')
+            dis_list = rec.get('distype') or []
+            dis_types = [d.get('disType', '') for d in dis_list if isinstance(d, dict)]
+            dis_str = rec.get('distypeStr', '') or ''
+            is_mh = ('智力残疾' in dis_str or '精神残疾' in dis_str or '智力残疾' in dis_types or '精神残疾' in dis_types)
+            jobs.append({
+                'code': rec.get('id', ''), 'owner': '', 'org': ci.get('companyName', ''),
+                'name': rec.get('jobName', ''), 'type': rec.get('jobType', ''),
+                'duty': ' | '.join([x for x in [rec.get('jobTop', ''), rec.get('jobNext', ''), rec.get('jobPost', '')] if x]),
+                'num': rec.get('jobNumber', ''), 'edu': rec.get('edu', ''),
+                'major': '', 'loc': loc, 'prov': prov, 'city': city, 'dist': dist,
+                'contact': '见原平台', 'source': host.replace('https://', '') + '（省级残联平台）',
+                'url': host + '/api/app-jycy-job/getJobEditDetailByid?id=' + str(rec.get('id', '')),
+                'published': rec.get('createTime', ''), 'updated': rec.get('updateTime', ''),
+                'deadline': rec.get('endTime', ''),
+                'dis_types': dis_types, 'dis_str': dis_str, 'is_mh': is_mh,
+            })
+        time.sleep(0.8)
+    return jobs
+
 def fetch_national_api(pages=150, page_size=50):
     """爬中国残联就业服务平台动态接口（公开数据）：全国岗位，低频翻页"""
     jobs = []
@@ -130,7 +209,8 @@ def fetch_national_api(pages=150, page_size=50):
                 'num': rec.get('jobNumber', ''), 'edu': rec.get('edu', ''),
                 'major': '', 'loc': loc, 'prov': prov, 'city': city, 'dist': dist,
                 'contact': '见原平台', 'source': '中国残联就业服务平台（动态接口）',
-                'url': 'https://www.cdpee.org.cn/', 'published': rec.get('createTime', ''),
+                'url': 'https://www.cdpee.org.cn/api/app-jycy-job/getJobEditDetailByid?id=' + str(rec.get('id', '')),
+                'published': rec.get('createTime', ''),
                 'updated': rec.get('updateTime', ''), 'deadline': rec.get('endTime', ''),
                 'dis_types': dis_types, 'dis_str': dis_str, 'is_mh': is_mh,
             })
@@ -163,15 +243,27 @@ def pinyin_first_letter(s):
 def main():
     jobs = []
     # ===== 来源1：中国残联动态接口（全国） =====
-    print('[1/5] 中国残联动态接口（全国，翻页抓取，仅保留心智障碍）...')
+    print('[1/6] 中国残联动态接口（全国，翻页抓取，仅保留心智障碍）...')
     api_jobs = fetch_national_api(pages=300, page_size=50)
     # 只保留心智障碍可投岗位（智力残疾 / 精神残疾）
     api_mh = [j for j in api_jobs if j.get('is_mh')]
     jobs.extend(api_mh)
     print('  全国动态岗位数:', len(api_jobs), '| 保留心智障碍可投:', len(api_mh))
 
-    # ===== 来源2：上海市人社局 =====
-    print('[2/5] 上海市人社局专项招聘...')
+    # ===== 来源2：甘肃省残疾人就业创业网络服务平台 =====
+    print('[2/6] 甘肃省残疾人就业创业网络服务平台...')
+    gs_jobs = fetch_prov_api('https://gansu.cdpee.org.cn', pages=5)
+    jobs.extend(gs_jobs)
+    print('  甘肃岗位数:', len(gs_jobs))
+
+    # ===== 来源3：湖北省残疾人求职招聘信息平台 =====
+    print('[3/6] 湖北省残疾人求职招聘信息平台...')
+    hb_jobs = fetch_hubei_api(pages=5)
+    jobs.extend(hb_jobs)
+    print('  湖北岗位数:', len(hb_jobs))
+
+    # ===== 来源4：上海市人社局 =====
+    print('[4/6] 上海市人社局专项招聘...')
     xls_url = 'https://rsj.sh.gov.cn/cmsres/33/33dc8ddf11834ea5af10a2496173e0d7/bd21cf6e2876cf371e56f44a317f4f1e.xls'
     data = fetch(xls_url)
     if data:
@@ -181,8 +273,8 @@ def main():
         jobs.extend(roles)
         print('  岗位数:', len(roles))
 
-    # ===== 来源3：市残联动态 =====
-    print('[3/5] 市残联就业动态...')
+    # ===== 来源5：市残联动态 =====
+    print('[5/6] 市残联就业动态...')
     news_url = 'https://www.shdpf.org.cn/clwz/clwz/jyfwzx/gzdt/index.html'
     b = fetch(news_url)
     if b:
@@ -202,8 +294,8 @@ def main():
                 })
             time.sleep(0.5)
 
-    # ===== 来源4：虹口残联 =====
-    print('[4/5] 虹口区残联...')
+    # ===== 来源6：虹口残联 =====
+    print('[6/6] 虹口区残联...')
     hk_url = 'https://www.shhk.gov.cn/xwzx/002014/20260507/b3557243-c46d-4e33-bd87-562077b8aaa5.html'
     hb = fetch(hk_url)
     if hb:
@@ -216,8 +308,8 @@ def main():
             'url': hk_url, 'published': '2026-05-07',
         })
 
-    # ===== 来源5：广东平台入口 =====
-    print('[5/5] 广东省残疾人就业服务网（站点入口）...')
+    # ===== 来源7：广东平台入口 =====
+    print('[7/7] 广东省残疾人就业服务网（站点入口）...')
     gb = fetch('https://www.jyfw.org.cn/')
     if gb:
         jobs.append({
