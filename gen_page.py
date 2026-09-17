@@ -256,6 +256,24 @@ HTML_DOC = """<!DOCTYPE html>
   .verifypage .ap-card h3{font-size:15px;color:var(--primary);margin-bottom:8px}
   .verifypage .ap-card p{font-size:13px;color:var(--text);line-height:1.8}
 
+  /* 岗位详情页（全屏覆盖层） */
+  .detailpage{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:30;overflow-y:auto;padding:0 16px 30px}
+  .detailpage .ap-head{background:var(--primary);color:#fff;margin:0 -16px;padding:16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+  .detailpage .back-btn{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer}
+  .detailpage .ap-title{font-size:18px;font-weight:700}
+  .dt-card{background:var(--card);border-radius:12px;padding:18px;margin-top:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .dt-name{font-size:19px;font-weight:700;color:var(--text);line-height:1.5}
+  .dt-org{font-size:14px;color:var(--sub);margin-top:6px}
+  .dt-badges{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .dt-rows{margin-top:14px;border-top:1px dashed var(--line);padding-top:6px}
+  .dt-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #f1f3f7;font-size:14px;line-height:1.6}
+  .dt-row:last-child{border-bottom:none}
+  .dt-k{flex:0 0 84px;color:var(--sub)}
+  .dt-v{flex:1;color:var(--text);word-break:break-all}
+  .dt-btns{display:flex;gap:10px;margin-top:16px}
+  .dt-btns .btn{flex:1;text-align:center}
+  .dt-note{font-size:12px;color:var(--sub);line-height:1.7;margin-top:14px;padding:10px 12px;background:#F7F9FC;border-radius:8px}
+
   /* 广告位 */
   .adbar{background:#fff;border-bottom:1px solid var(--line);padding:8px 16px;display:flex;align-items:center;gap:10px}
   .adbar .adlabel{font-size:11px;color:var(--sub);background:var(--bg);padding:2px 8px;border-radius:4px;flex:0 0 auto}
@@ -439,6 +457,21 @@ HTML_DOC = """<!DOCTYPE html>
   </div>
 </div>
 
+<div class="detailpage" id="detailPage">
+  <div class="ap-head">
+    <button class="back-btn" onclick="showHome()">← 返回</button>
+    <span class="ap-title">岗位详情</span>
+  </div>
+  <div class="dt-card">
+    <div class="dt-name" id="dtName"></div>
+    <div class="dt-org" id="dtOrg"></div>
+    <div class="dt-badges" id="dtBadges"></div>
+    <div class="dt-rows" id="dtRows"></div>
+    <div class="dt-btns" id="dtBtns"></div>
+    <div class="dt-note">岗位信息聚合自公开渠道，仅供求职导航参考，具体以原平台为准。原平台查看详情可能需要注册登录；信息版权归原发布方所有。本平台为纯公益信息导航，不收取任何费用。</div>
+  </div>
+</div>
+
 <script>
 // ===== 安全工具 =====
 // HTML 转义：所有插入 innerHTML 的外部数据必须经过 esc()
@@ -597,11 +630,13 @@ function showHome(){
   document.getElementById('colPage').style.display = 'none';
   document.getElementById('aboutPage').style.display = 'none';
   document.getElementById('verifyPage').style.display = 'none';
+  document.getElementById('detailPage').style.display = 'none';
 }
 function showAbout(){
   document.getElementById('colPage').style.display = 'none';
   document.getElementById('aboutPage').style.display = 'block';
   document.getElementById('verifyPage').style.display = 'none';
+  document.getElementById('detailPage').style.display = 'none';
   document.getElementById('aboutPage').scrollTop = 0;
   window.scrollTo(0,0);
 }
@@ -609,8 +644,50 @@ function showVerify(){
   document.getElementById('colPage').style.display = 'none';
   document.getElementById('aboutPage').style.display = 'none';
   document.getElementById('verifyPage').style.display = 'block';
+  document.getElementById('detailPage').style.display = 'none';
   document.getElementById('verifyPage').scrollTop = 0;
   window.scrollTo(0,0);
+}
+// 岗位详情页（站内展示，避免原平台登录墙）
+function findJob(cd){
+  for(var i = 0; i < JOBS.length; i++){ if(JOBS[i].cd === cd) return JOBS[i]; }
+  return null;
+}
+function showJob(cd){
+  var j = findJob(cd);
+  if(!j){ ensureAll(function(){ showJob(cd); }); return; }
+  document.getElementById('colPage').style.display = 'none';
+  document.getElementById('aboutPage').style.display = 'none';
+  document.getElementById('verifyPage').style.display = 'none';
+  document.getElementById('detailPage').style.display = 'block';
+  document.getElementById('detailPage').scrollTop = 0;
+  window.scrollTo(0,0);
+  document.getElementById('dtName').textContent = j.n;
+  document.getElementById('dtOrg').textContent = j.o;
+  var isOff = j.st === 'expired' || (j.dl && fmtDeadline(j.dl) === '已截止');
+  var dl = fmtDeadline(j.dl);
+  var b = isOff ? '<span class="badge off">已失效</span>' : '<span class="badge new">有效</span>';
+  if(j.mh) b += '<span class="badge mh">心智障碍可投</span>';
+  if(!isOff && dl && dl.indexOf('天后截止') >= 0) b += '<span class="badge hot">即将截止</span>';
+  document.getElementById('dtBadges').innerHTML = b;
+  var rows = [];
+  if(j.ds) rows.push(['适合残疾类型', j.ds]);
+  if(j.l) rows.push(['工作地点', j.l]);
+  if(j.e) rows.push(['学历要求', j.e]);
+  if(j.m) rows.push(['招聘人数', j.m + ' 人']);
+  if(j.t) rows.push(['岗位类型', j.t]);
+  if(j.dy) rows.push(['岗位分类', j.dy]);
+  rows.push(['发布时间', fmtTime(j.pb)]);
+  if(dl) rows.push(['截止时间', dl]);
+  if(j.s) rows.push(['信息来源', j.s]);
+  var rh = '';
+  rows.forEach(function(r){
+    rh += '<div class="dt-row"><span class="dt-k">' + esc(r[0]) + '</span><span class="dt-v">' + esc(r[1]) + '</span></div>';
+  });
+  document.getElementById('dtRows').innerHTML = rh;
+  document.getElementById('dtBtns').innerHTML =
+    '<a class="btn ghost" target="_blank" rel="noopener noreferrer" href="' + safeUrl(j.u) + '">前往原平台</a>' +
+    '<a class="btn orig" target="_blank" rel="noopener noreferrer" href="' + companyUrl(j.o) + '">查公司</a>';
 }
 // 所有权验证：djb2 哈希与页面指纹比对（标识本身不出现、不上传）
 var OWN_HASH = '__OWN_HASH__';
@@ -637,6 +714,7 @@ window.addEventListener('hashchange', function(){
   if(m && COLDEF[m[1]]){ showCol(m[1]); }
   else if(location.hash === '#about'){ showAbout(); }
   else if(location.hash === '#verify'){ showVerify(); }
+  else if(location.hash.indexOf('#job/') === 0){ showJob(location.hash.slice(5)); }
   else { showHome(); }
 });
 renderColGrid();
@@ -755,7 +833,7 @@ function render(){
       (j.dy?'<div class="duty">'+dy+'</div>':'')+
       '<div class="foot"><div class="time">'+pb+(dl?' · <span class="dl">'+dl+'</span>':'')+'</div>'+
       '<div class="btns">'+
-        '<a class="btn ghost" target="_blank" rel="noopener noreferrer" href="'+du+'">查看详情</a>'+
+        '<button class="btn ghost" data-cd="'+esc(j.cd)+'">查看详情</button>'+
         '<a class="btn orig" target="_blank" rel="noopener noreferrer" href="'+companyUrl(j.o)+'">查公司</a>'+
       '</div></div>';
     el.appendChild(card);
@@ -766,6 +844,18 @@ function render(){
   if(total > shownMax){ mw.style.display = 'block'; }
   else { mw.style.display = 'none'; }
 }
+
+// 事件委托：卡片"查看详情"打开站内详情页
+document.getElementById('list').addEventListener('click', function(e){
+  var t = e.target;
+  while(t && t !== this){
+    if(t.classList && t.classList.contains('btn') && t.classList.contains('ghost')){
+      showJob(t.getAttribute('data-cd'));
+      return;
+    }
+    t = t.parentNode;
+  }
+});
 
 // 加载更多：先拉下一片数据，再渲染更多
 document.getElementById('moreBtn').addEventListener('click', function(){
