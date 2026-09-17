@@ -82,9 +82,9 @@
   .notice .ntxt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .notice .ngo{flex:0 0 auto;color:var(--primary);font-weight:600}
 
-  /* 关于页 */
-  .aboutpage{display:none;background:var(--bg);min-height:70vh;padding:0 16px 30px}
-  .aboutpage .ap-head{background:var(--primary);color:#fff;margin:0 -16px;padding:16px;display:flex;align-items:center;gap:10px}
+  /* 关于页（全屏覆盖层） */
+  .aboutpage{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:30;overflow-y:auto;padding:0 16px 30px}
+  .aboutpage .ap-head{background:var(--primary);color:#fff;margin:0 -16px;padding:16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
   .aboutpage .back-btn{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer}
   .aboutpage .ap-title{font-size:18px;font-weight:700}
   .aboutpage .ap-card{background:var(--card);border-radius:12px;padding:16px;margin-top:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
