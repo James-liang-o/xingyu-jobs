@@ -131,6 +131,8 @@ HTML_DOC = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>行隅 · 心智障碍就业导航 - 全国助残岗位信息平台</title>
 <meta name="description" content="行隅：为心智障碍（智力残疾、精神残疾）求职者提供全国可投岗位信息导航，聚合中国残联就业服务平台等公开渠道岗位，附就业政策、机构案例、企业故事、投稿与交流，帮助心智障碍青年实现就业。">
 <meta name="keywords" content="心智障碍就业,智力残疾就业,精神残疾就业,残疾人岗位,助残就业,支持性就业,行隅">
@@ -326,6 +328,20 @@ HTML_DOC = """<!DOCTYPE html>
 <div class="disclaimer"><b>免责声明：</b>本页岗位信息均采集自公开渠道（中国残联就业服务平台、各省市残联与人社部门官网等），仅供求职者参考。信息版权归原发布方所有，岗位真实性、时效性与联系方式以原发布方为准，请自行核实后再联系。本站仅为信息导航，不代投、不代招、不收取任何费用。若原岗位已招满或过期，以原平台为准。</div>
 
 <script>
+// ===== 安全工具 =====
+// HTML 转义：所有插入 innerHTML 的外部数据必须经过 esc()
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// 只允许 http/https/mailto 协议，防 javascript: 等危险协议注入
+function safeUrl(u){
+  if(!u) return '#';
+  u = String(u).trim();
+  if(/^(https?:|mailto:)/i.test(u)) return u;
+  return '#';
+}
 var JOBS = __JS_CHUNK0__;
 var CITIES = __JS_CITIES__;
 var CHUNK_TOTAL = __CHUNK_TOTAL__;
@@ -410,7 +426,7 @@ function renderAds(){
     var el = document.getElementById(id);
     if(list && list.length){
       var a = list[0];
-      el.innerHTML = '<a href="'+(a.url||'#')+'" target="_blank" rel="noopener">'+(a.text||'广告')+'</a>';
+      el.innerHTML = '<a href="'+safeUrl(a.url)+'" target="_blank" rel="noopener noreferrer">'+esc(a.text||'广告')+'</a>';
     } else {
       el.innerHTML = '<span class="adempty">广告位 · 诚招爱心企业</span>';
     }
@@ -455,9 +471,9 @@ function showCol(key){
     items.forEach(function(it){
       var a = document.createElement('a');
       a.className = 'colp-item';
-      a.href = it.u || '#'; a.target = '_blank'; a.rel = 'noopener';
-      var sum = it.s ? '<div class="s">'+it.s+'</div>' : '';
-      a.innerHTML = '<div class="t">'+it.t+'</div>'+sum+'<div class="meta"><span class="src">来源：'+it.o+'</span><span>'+it.d+'</span><span class="go">阅读全文 ›</span></div>';
+      a.href = safeUrl(it.u); a.target = '_blank'; a.rel = 'noopener noreferrer';
+      var sum = it.s ? '<div class="s">'+esc(it.s)+'</div>' : '';
+      a.innerHTML = '<div class="t">'+esc(it.t)+'</div>'+sum+'<div class="meta"><span class="src">来源：'+esc(it.o)+'</span><span>'+esc(it.d)+'</span><span class="go">阅读全文 ›</span></div>';
       list.appendChild(a);
     });
   }
@@ -572,21 +588,24 @@ function render(){
     if(!isOff && dl && dl.indexOf('天后截止')>=0) badge = '<span class="badge hot">即将截止</span>';
     var mhTag = j.mh ? '<span class="badge mh">心智障碍可投</span>' : '';
     var favCls = isFav(j.cd) ? ' on' : '';
+    var du = safeUrl(j.du || j.u);
+    var nm = esc(j.n), org = esc(j.o), ds = esc(j.ds), loc = esc(j.l);
+    var edu = esc(j.e), num = esc(j.m), typ = esc(j.t), dy = esc(j.dy);
     card.innerHTML =
-      '<div class="row1"><div class="nm"><a class="jlink" target="_blank" rel="noopener" href="'+(j.du||j.u)+'">'+j.n+'</a></div><button class="favbtn'+favCls+'" data-c="'+j.cd+'" title="收藏">'+(isFav(j.cd)?'★':'☆')+'</button>'+badge+'</div>'+
-      '<div class="org">'+j.o+'</div>'+
-      (j.ds?'<div class="ds">适合残疾类型：'+j.ds+'</div>':'')+
+      '<div class="row1"><div class="nm"><a class="jlink" target="_blank" rel="noopener noreferrer" href="'+du+'">'+nm+'</a></div><button class="favbtn'+favCls+'" data-c="'+esc(j.cd)+'" title="收藏">'+(isFav(j.cd)?'★':'☆')+'</button>'+badge+'</div>'+
+      '<div class="org">'+org+'</div>'+
+      (j.ds?'<div class="ds">适合残疾类型：'+ds+'</div>':'')+
       '<div class="info">'+
-        '<span class="i">📍 '+j.l+'</span>'+
-        (j.e?'<span class="i">学历：'+j.e+'</span>':'')+
-        (j.m?'<span class="i">招 '+j.m+' 人</span>':'')+
-        (j.t?'<span class="i">'+j.t+'</span>':'')+
+        '<span class="i">📍 '+loc+'</span>'+
+        (j.e?'<span class="i">学历：'+edu+'</span>':'')+
+        (j.m?'<span class="i">招 '+num+' 人</span>':'')+
+        (j.t?'<span class="i">'+typ+'</span>':'')+
       '</div>'+
-      (j.dy?'<div class="duty">'+j.dy+'</div>':'')+
+      (j.dy?'<div class="duty">'+dy+'</div>':'')+
       '<div class="foot"><div class="time">'+pb+(dl?' · <span class="dl">'+dl+'</span>':'')+'</div>'+
       '<div class="btns">'+
-        '<a class="btn ghost" target="_blank" rel="noopener" href="'+(j.du||j.u)+'">查看详情</a>'+
-        '<a class="btn orig" target="_blank" rel="noopener" href="'+companyUrl(j.o)+'">查公司</a>'+
+        '<a class="btn ghost" target="_blank" rel="noopener noreferrer" href="'+du+'">查看详情</a>'+
+        '<a class="btn orig" target="_blank" rel="noopener noreferrer" href="'+companyUrl(j.o)+'">查公司</a>'+
       '</div></div>';
     el.appendChild(card);
   });

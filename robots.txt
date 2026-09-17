@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# 站点为公开信息导航，欢迎搜索引擎收录；数据更新频率约半周一次
+Sitemap: https://james-liang-o.github.io/xingyu-jobs/sitemap.xml
