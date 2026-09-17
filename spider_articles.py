@@ -9,6 +9,7 @@
 输出：articles.json（供 gen_page.py 生成页面）
 """
 import urllib.request, ssl, json, re, time, html as htmllib
+import urllib.parse
 
 CTX = ssl.create_default_context()
 CTX.check_hostname = False
@@ -32,16 +33,19 @@ COL_RULES = [
                   '艺术展', '音乐会', '马拉松', '健步', '游园', '夏令营', '开放日', '庆祝',
                   '文化节', '嘉年华', '主题活动', '关爱活动', '融合活动', '社会活动',
                   '交流活动', '联谊', '献爱心', '慰问活动', '趣味', '比赛', '大赛',
-                  '展演', '歌咏', '书画', '摄影展']),
+                  '展演', '歌咏', '书画', '摄影展', '特奥']),
     ('policy', ['政策', '规划', '办法', '条例', '通知', '意见', '规定', '保障金', '税收', '税务',
                 '补贴', '奖励', '认证', '审核', '文件', '方案', '法律', '法规', '权益', '优待',
-                '社保', '保险', '托养', '安置', '帮扶', '增收', '就业援助', '春风行动', '就业服务月']),
+                '社保', '保险', '托养', '安置', '帮扶', '增收', '就业援助', '春风行动', '就业服务月',
+                '保障', '问答', '解读', '措施', '标准', '民生实事']),
     ('teach', ['培训', '教学', '课程', '技能', '实训', '职教', '开班', '学员', '特教',
-               '学艺', '讲座', '课堂', '教师', '教育', '职业指导', '测评']),
-    ('company', ['企业', '招聘', '录用', '员工', '车间', '岗位', '合同', '就业基地',
-                 '招工', '求职', '应聘', '入职', '用工']),
+               '学艺', '讲座', '课堂', '教师', '教育', '职业指导', '测评', '实习', '上岗',
+               '培养', '辅导', '职业康复', '职业技能', '就业能力', '提升班', '培训班']),
+    ('company', ['企业', '公司', '招聘', '录用', '员工', '车间', '岗位', '合同', '就业基地',
+                 '招工', '求职', '应聘', '入职', '用工', '吸纳', '接收', '工厂', '共建',
+                 '安置就业', '残疾人就业']),
     ('doing', ['机构', '中心', '协会', '驿站', '工坊', '咖啡', '洗车', '项目', '活动',
-               '公益', '扶残', '组织', '基地', '关爱', '赋能', '服务']),
+               '公益', '扶残', '组织', '基地', '关爱', '赋能', '服务', '帮扶性', '辅助性']),
 ]
 
 def fetch(url, timeout=20):
@@ -169,6 +173,94 @@ def crawl_api(api, source, pages=1, size=20):
     print(f'  [接口{api}] {len(out)} 条')
     return out
 
+def _clean_title(x):
+    return htmllib.unescape(re.sub(r'\s+', ' ', x)).strip()
+
+def _absurl(base, href):
+    """把相对链接绝对化"""
+    if not href:
+        return ''
+    if href.startswith('//'):
+        return 'https:' + href
+    if href.startswith('http'):
+        return href
+    return urllib.parse.urljoin(base, href)
+
+def parse_list(base, t):
+    """通用列表页解析：适配多种结构，返回 [{title,date,url}]"""
+    out = []
+    items = re.findall(r'<li>\s*<span>([\d\-]+)</span>\s*<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', t, re.S)
+    if not items:
+        items = re.findall(r'<a[^>]+href="([^"]+\.(?:htm|html|shtml))"[^>]*title="([^"]{8,80})"', t)
+        items = [('', h, ti) for h, ti in items]
+    if not items:
+        items = re.findall(r'<a[^>]+href="([^"]+\.(?:htm|html|shtml))"[^>]*>([^<>]{8,60})</a>', t)
+        items = [('', h, ti) for h, ti in items]
+    for date, href, title in items:
+        title = _clean_title(title)
+        if len(title) < 8 or not keep(title):
+            continue
+        if re.search(r'\.(css|js|png|jpg|ico|gif|pdf|doc|zip)', href, re.I):
+            continue
+        if '更多' in title or '首页' in title or '登录' in title or '注册' in title:
+            continue
+        out.append({'title': title, 'date': date.strip(), 'url': _absurl(base, href),
+                    'source': '', 'summary': ''})
+    return out
+
+def crawl_paged(name, base, page_fn, maxpage, sleep=0.4, src_label=None):
+    """通用翻页爬取：page_fn(p) 返回第 p 页 URL（p 从 0 开始）"""
+    out = []
+    for p in range(maxpage):
+        url = page_fn(p)
+        t = fetch(url)
+        if not t or t.startswith('ERR'):
+            if p == 0:
+                print(f'  [{name}] 首页失败: {str(t)[:30]}')
+                return out
+            break
+        items = parse_list(url, t)
+        if not items:
+            if p > 0:
+                break
+        new = 0
+        for it in items:
+            if not it['source']:
+                it['source'] = src_label or name
+            out.append(it)
+            new += 1
+        if new == 0 and p > 0:
+            break
+        time.sleep(sleep)
+    print(f'  [{name}] {len(out)} 条')
+    return out
+
+# 中国残联官网更多栏目（宣传文化/体育/康复/维权/政策/公告，可翻页）
+CDPF_MORE_COLS = [
+    ('中国残联·宣传文化', 'https://www.cdpf.org.cn/ywpd/xcwh/', 30),
+    ('中国残联·体育', 'https://www.cdpf.org.cn/ywpd/ty/', 30),
+    ('中国残联·康复', 'https://www.cdpf.org.cn/ywpd/kf/', 30),
+    ('中国残联·维权', 'https://www.cdpf.org.cn/ywpd/wq/', 30),
+    ('中国残联·政策文件', 'https://www.cdpf.org.cn/zwgk/zcwj/', 30),
+    ('中国残联·通知公告', 'https://www.cdpf.org.cn/zwgk/ggtz1/', 30),
+]
+
+# 省级残联（广东/浙江可翻页，其余爬首页）
+PROV_SOURCES = [
+    ('广东残联·新闻', 'https://www.gddpf.org.cn/xwzx/index.html',
+     lambda p: f'https://www.gddpf.org.cn/xwzx/index.html?page={p+1}', 15),
+    ('浙江残联·动态', 'https://www.zjdpf.org.cn/col/col122/index.html',
+     lambda p: 'https://www.zjdpf.org.cn/col/col122/index.html' if p == 0 else f'https://www.zjdpf.org.cn/col/col122/index_{p}.html', 15),
+    ('海南残联', 'https://www.hidpf.org.cn/', None, 1),
+    ('甘肃残联', 'https://www.gsdpf.org.cn/', None, 1),
+    ('贵州残联', 'https://www.gzdpf.org.cn/', None, 1),
+    ('陕西残联', 'https://www.sxdpf.org.cn/', None, 1),
+    ('山东残联', 'https://www.sddpf.org.cn/', None, 1),
+    ('重庆残联', 'https://www.cqdpf.org.cn/', None, 1),
+    ('安徽残联', 'https://www.ahdpf.org.cn/', None, 1),
+    ('中国残疾人网', 'https://www.chinadp.net.cn/', None, 1),
+]
+
 # 手工核验的真实报道（seed）
 SEED_SOCIAL = [
     {"t": "就业辅导员：心智障碍者就业的“引路人”", "s": "湖南益阳，残联安排就业辅导员周妹一对一帮扶心智障碍青年刘望，联系企业提供切肉、穿串、打包等岗位，反复试岗后刘望选择了穿串工种，上岗前三天辅导员全程陪同，帮助他适应工作。", "u": "http://www.chinanews.com.cn/sh/2024/09-07/10282014.shtml", "o": "中国新闻网", "d": "2024-09-07"},
@@ -244,32 +336,41 @@ SEED_ACTIVITY = [
 ]
 
 def build():
-    print('=== 行隅专栏爬虫 v2 ===')
+    print('=== 行隅专栏爬虫 v3 ===')
     cols = {'social': [], 'doing': [], 'company': [], 'policy': [], 'teach': [], 'activity': []}
 
-    # 1. 中国残联官网工作动态（主力）
-    cdpf_items = crawl_cdpf()
-    for it in cdpf_items:
-        col = classify(it['title'])
-        cols[col].append(it)
-
-    # 1b. 中国残联官网 政策资料 / 就业培训 栏目
+    # 1. 中国残联官网工作动态（主力，翻页）
+    for it in crawl_cdpf():
+        cols[classify(it['title'])].append(it)
+    # 1b. 政策资料 / 就业培训
     for it in crawl_cdpf_list('https://www.cdpf.org.cn/ywpd/jyjy/jyjyzcwj/', '中国残联·政策资料', '政策资料'):
-        col = classify(it['title'])
-        cols[col].append(it)
+        cols[classify(it['title'])].append(it)
     for it in crawl_cdpf_list('https://www.cdpf.org.cn/fwpt1/jypx1/', '中国残联·就业培训', '就业培训'):
-        col = classify(it['title'])
-        cols[col].append(it)
+        cols[classify(it['title'])].append(it)
+    # 1c. 中国残联更多栏目（宣传文化/体育/康复/维权/政策/公告）
+    for name, base, maxp in CDPF_MORE_COLS:
+        for it in crawl_paged(name, base, lambda p, b=base: b + ('index.htm' if p == 0 else f'index{p}.htm'), maxp, src_label=name):
+            cols[classify(it['title'])].append(it)
 
-    # 2. 残联就业服务平台接口（资讯/公告/法规）翻页加深
+    # 2. 残联就业服务平台接口（资讯/公告/法规）
     for api, src, pages in [('getHomeInformationList', '中国残联就业服务平台', 4),
                             ('getHomeNotice', '中国残联就业服务平台·公告', 4),
                             ('getHomeRegulations', '中国残联就业服务平台·政策', 4)]:
         for it in crawl_api(api, src, pages):
-            col = classify(it['title'])
-            cols[col].append(it)
+            cols[classify(it['title'])].append(it)
 
-    # 3. 手工核验的真实报道 seed
+    # 3. 省级残联 + 中国残疾人网
+    for name, base, page_fn, maxp in PROV_SOURCES:
+        if page_fn:
+            for it in crawl_paged(name, base, page_fn, maxp, src_label=name):
+                cols[classify(it['title'])].append(it)
+        else:
+            t = fetch(base)
+            for it in parse_list(base, t):
+                it['source'] = name
+                cols[classify(it['title'])].append(it)
+
+    # 4. 手工核验的真实报道 seed
     for it in SEED_SOCIAL:
         cols['social'].append({'title': it['t'], 'summary': it['s'], 'source': it['o'], 'date': it['d'], 'url': it['u']})
     for it in SEED_DOING:
@@ -283,7 +384,18 @@ def build():
     for it in SEED_ACTIVITY:
         cols['activity'].append({'title': it['t'], 'summary': it['s'], 'source': it['o'], 'date': it['d'], 'url': it['u']})
 
-    # 4. 去重 + 按日期倒序
+    # 5. 历史累积：读取已有 articles.json 合并（内容只增不减）
+    try:
+        with open('articles.json', encoding='utf-8') as f:
+            old = json.load(f)
+        for k in cols:
+            if old.get(k):
+                cols[k].extend(old[k])
+        print('  历史累积: 已合并旧数据', {k: len(old.get(k, [])) for k in cols})
+    except Exception as e:
+        print('  历史累积: 无旧数据或读取失败', str(e)[:40])
+
+    # 6. 去重 + 按日期倒序
     for k in cols:
         seen = set()
         uniq = []
@@ -294,7 +406,8 @@ def build():
             seen.add(key)
             uniq.append(it)
         uniq.sort(key=lambda x: x.get('date', ''), reverse=True)
-        cols[k] = uniq
+        # 每类最多保留 60 篇（保持"50 个左右"的自然浮动）
+        cols[k] = uniq[:60]
 
     out = dict(cols)
     out['updated_at'] = time.strftime('%Y-%m-%d %H:%M:%S')

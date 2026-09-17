@@ -2,7 +2,7 @@ name: update-articles
 on:
   schedule:
     # 专栏每半月更新一次：UTC 每月 1 日、16 日 10:30（北京时间 18:30）
-    - cron: '30 10 1,16 * *'
+    - cron: '30 10 * * 1'
   workflow_dispatch:
 jobs:
   build:
