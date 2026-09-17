@@ -81,7 +81,7 @@ def crawl_cdpf():
     """中国残联官网 教育就业-工作动态 列表页（可翻页）"""
     out = []
     base = 'https://www.cdpf.org.cn/ywpd/jyjy/jyjygzdt/'
-    for p in range(0, 150):
+    for p in range(0, 80):
         page = 'index.htm' if p == 0 else f'index{p}.htm'
         t = fetch(base + page)
         if not t:
@@ -105,7 +105,7 @@ def crawl_cdpf():
             new += 1
         if new == 0 and p > 0:
             break
-        time.sleep(0.5)
+        time.sleep(0.3)
     print(f'  [中国残联官网·工作动态] {len(out)} 条')
     return out
 
@@ -133,7 +133,7 @@ def crawl_cdpf_list(base, source, label, maxpage=50):
             new += 1
         if new == 0 and p > 0:
             break
-        time.sleep(0.4)
+        time.sleep(0.3)
     print(f'  [{label}] {len(out)} 条')
     return out
 
@@ -166,7 +166,7 @@ def crawl_api(api, source, pages=1, size=20):
                     'date': (rec.get('createTime') or '')[:10].replace('/', '-'),
                     'url': f'https://www.cdpee.org.cn/news/newDetail?id={cid}',
                 })
-            time.sleep(0.4)
+            time.sleep(0.3)
         except Exception as e:
             print(f'  [接口{api}] page{p} ERR {e}')
             break
@@ -237,20 +237,29 @@ def crawl_paged(name, base, page_fn, maxpage, sleep=0.4, src_label=None):
 
 # 中国残联官网更多栏目（宣传文化/体育/康复/维权/政策/公告，可翻页）
 CDPF_MORE_COLS = [
-    ('中国残联·宣传文化', 'https://www.cdpf.org.cn/ywpd/xcwh/', 30),
-    ('中国残联·体育', 'https://www.cdpf.org.cn/ywpd/ty/', 30),
-    ('中国残联·康复', 'https://www.cdpf.org.cn/ywpd/kf/', 30),
-    ('中国残联·维权', 'https://www.cdpf.org.cn/ywpd/wq/', 30),
-    ('中国残联·政策文件', 'https://www.cdpf.org.cn/zwgk/zcwj/', 30),
-    ('中国残联·通知公告', 'https://www.cdpf.org.cn/zwgk/ggtz1/', 30),
+    ('中国残联·宣传文化', 'https://www.cdpf.org.cn/ywpd/xcwh/', 15),
+    ('中国残联·体育', 'https://www.cdpf.org.cn/ywpd/ty/', 15),
+    ('中国残联·康复', 'https://www.cdpf.org.cn/ywpd/kf/', 15),
+    ('中国残联·维权', 'https://www.cdpf.org.cn/ywpd/wq/', 15),
+    ('中国残联·政策文件', 'https://www.cdpf.org.cn/zwgk/zcwj/', 15),
+    ('中国残联·通知公告', 'https://www.cdpf.org.cn/zwgk/ggtz1/', 15),
 ]
 
 # 省级残联（广东/浙江可翻页，其余爬首页）
 PROV_SOURCES = [
     ('广东残联·新闻', 'https://www.gddpf.org.cn/xwzx/index.html',
-     lambda p: f'https://www.gddpf.org.cn/xwzx/index.html?page={p+1}', 15),
+     lambda p: f'https://www.gddpf.org.cn/xwzx/index.html?page={p+1}', 8),
     ('浙江残联·动态', 'https://www.zjdpf.org.cn/col/col122/index.html',
-     lambda p: 'https://www.zjdpf.org.cn/col/col122/index.html' if p == 0 else f'https://www.zjdpf.org.cn/col/col122/index_{p}.html', 15),
+     lambda p: 'https://www.zjdpf.org.cn/col/col122/index.html' if p == 0 else f'https://www.zjdpf.org.cn/col/col122/index_{p}.html', 8),
+    ('浙江残联·就业', 'https://www.zjdpf.org.cn/col/col125/index.html',
+     lambda p: 'https://www.zjdpf.org.cn/col/col125/index.html' if p == 0 else f'https://www.zjdpf.org.cn/col/col125/index_{p}.html', 6),
+    # 新疆残联：6 个高相关栏目（动态宣传/地州/县市/媒体聚焦等）
+    ('新疆·动态宣传', 'https://www.xjdpf.org.cn/dtxc1/zxdt.htm', None, 1),
+    ('新疆·地州动态', 'https://www.xjdpf.org.cn/dtxc1/dzdt.htm', None, 1),
+    ('新疆·县市动态', 'https://www.xjdpf.org.cn/dtxc1/xsdt.htm', None, 1),
+    ('新疆·媒体聚焦', 'https://www.xjdpf.org.cn/dtxc1/mtjj.htm', None, 1),
+    ('新疆·政策法规', 'https://www.xjdpf.org.cn/zcfg1/', None, 1),
+    ('新疆·工作要闻', 'https://www.xjdpf.org.cn/gzyw1/', None, 1),
     ('海南残联', 'https://www.hidpf.org.cn/', None, 1),
     ('甘肃残联', 'https://www.gsdpf.org.cn/', None, 1),
     ('贵州残联', 'https://www.gzdpf.org.cn/', None, 1),
@@ -366,9 +375,10 @@ def build():
                 cols[classify(it['title'])].append(it)
         else:
             t = fetch(base)
-            for it in parse_list(base, t):
-                it['source'] = name
-                cols[classify(it['title'])].append(it)
+            if t:
+                for it in parse_list(base, t):
+                    it['source'] = name
+                    cols[classify(it['title'])].append(it)
 
     # 4. 手工核验的真实报道 seed
     for it in SEED_SOCIAL:
