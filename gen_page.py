@@ -73,6 +73,20 @@ letters_used = sorted(set(city_letter_map.get(c, '#') for c in all_cities))
 def esc(s):
     return html.escape(str(s), quote=True)
 
+def _is_off(r):
+    """Python 端判断岗位是否已过期/失效（与前端 fmtDeadline 逻辑一致）"""
+    if r.get('st') == 'expired':
+        return True
+    dl = r.get('dl') or ''
+    m = re.search(r'(\d{4})[年/\-](\d{1,2})[月/\-](\d{1,2})', dl)
+    if not m:
+        return False
+    try:
+        d = datetime.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return False
+    return d < datetime.datetime.now()
+
 import re as _re
 _DETAIL_RE = _re.compile(r'jobDetail|/job[/?]|job/detail|id=\d', _re.I)
 def detail_url(r):
@@ -93,7 +107,19 @@ for r in rows:
         't': r['t'], 'pb': r['pb'], 'dl': r['dl'], 'dy': r['dy'], 's': r['s'], 'u': r['u'], 'st': r['st'],
         'mh': r['mh'], 'ds': r['ds'], 'cd': r['cd'], 'du': detail_url(r),
     })
-js_data = json.dumps(js_rows, ensure_ascii=False)
+# 分片：岗位数据按每片 600 条拆成独立 js 文件，页面按需加载；首片内嵌 HTML 保证首屏秒开
+# chunk 文件用回调函数交付数据（window.__chunkCb(idx, data)），避免依赖 script onload 时序
+CHUNK_SIZE = 600
+chunks = [js_rows[i:i+CHUNK_SIZE] for i in range(0, len(js_rows), CHUNK_SIZE)]
+for ci, ck in enumerate(chunks):
+    with open(os.path.join(BASE, 'jobs_chunk_%d.js' % ci), 'w', encoding='utf-8') as f:
+        f.write('window.__chunkCb(%d,%s);' % (ci, json.dumps(ck, ensure_ascii=False)))
+js_chunk0 = json.dumps(chunks[0], ensure_ascii=False)
+chunk_total = len(chunks)
+
+# 全量统计在 Python 端算好写死，避免 JS 分片加载期间数字跳变
+st_valid = sum(1 for r in rows if r['st'] != 'expired' and not _is_off(r))
+st_off = len(rows) - st_valid
 
 city_js = []
 for city in all_cities:
@@ -300,14 +326,47 @@ HTML_DOC = """<!DOCTYPE html>
 <div class="disclaimer"><b>免责声明：</b>本页岗位信息均采集自公开渠道（中国残联就业服务平台、各省市残联与人社部门官网等），仅供求职者参考。信息版权归原发布方所有，岗位真实性、时效性与联系方式以原发布方为准，请自行核实后再联系。本站仅为信息导航，不代投、不代招、不收取任何费用。若原岗位已招满或过期，以原平台为准。</div>
 
 <script>
-var JOBS = __JS_DATA__;
+var JOBS = __JS_CHUNK0__;
 var CITIES = __JS_CITIES__;
+var CHUNK_TOTAL = __CHUNK_TOTAL__;
+var CHUNK_LOADED = 1;
 var curLetter = '全部', curCity = '全部', kw = '';
 var onlyValid = true;
-var stValid = JOBS.filter(function(j){ return j.st!=='expired' && !(j.dl && fmtDeadline(j.dl)==='已截止'); }).length;
-var stOff = JOBS.length - stValid;
-document.getElementById('stValid').textContent = stValid;
-document.getElementById('stOff').textContent = stOff;
+document.getElementById('stValid').textContent = '__ST_VALID__';
+document.getElementById('stOff').textContent = '__ST_OFF__';
+
+// 分片加载：chunk 文件执行时调用 __chunkCb 把数据交回（不依赖 onload 时序，file:// 与线上均可靠）
+window.__chunkCb = function(idx, data){
+  JOBS = JOBS.concat(data);
+  if(idx + 1 > CHUNK_LOADED) CHUNK_LOADED = idx + 1;
+};
+function loadChunk(i){
+  if(i < CHUNK_TOTAL && CHUNK_LOADED <= i){
+    var s = document.createElement('script');
+    s.src = 'jobs_chunk_'+i+'.js';
+    s.onerror = function(){ if(CHUNK_LOADED <= i) CHUNK_LOADED = i + 1; };
+    document.head.appendChild(s);
+  }
+}
+function waitUntil(fn, cb, tries){
+  tries = tries || 0;
+  if(fn()){ cb && cb(); return; }
+  if(tries > 150){ cb && cb(); return; }  // 上限约 9 秒，超时用已加载数据渲染
+  setTimeout(function(){ waitUntil(fn, cb, tries + 1); }, 60);
+}
+// 加载全部剩余分片后回调
+function ensureAll(cb){
+  if(CHUNK_LOADED >= CHUNK_TOTAL){ cb && cb(); return; }
+  for(var i = CHUNK_LOADED; i < CHUNK_TOTAL; i++) loadChunk(i);
+  waitUntil(function(){ return CHUNK_LOADED >= CHUNK_TOTAL; }, cb);
+}
+// 只加载下一片（用于"加载更多"浏览）
+function ensureNext(cb){
+  if(CHUNK_LOADED >= CHUNK_TOTAL){ cb && cb(); return; }
+  var target = CHUNK_LOADED;
+  loadChunk(target);
+  waitUntil(function(){ return CHUNK_LOADED > target; }, cb);
+}
 
 // 字母条：默认收起，点击展开
 var cityToggle = document.getElementById('cityToggle');
@@ -326,7 +385,7 @@ LETTERS.forEach(function(L){
   if(L==='#'){
     d.addEventListener('click', function(){});
   } else {
-    d.addEventListener('click', function(){ curLetter = L; shownMax = PAGE_SIZE; renderCities(); render(); });
+    d.addEventListener('click', function(){ curLetter = L; shownMax = PAGE_SIZE; renderCities(); ensureAll(function(){ render(); }); });
   }
   lettersEl.appendChild(d);
 });
@@ -335,7 +394,7 @@ LETTERS.forEach(function(L){
 document.getElementById('onlyValid').addEventListener('change', function(){
   onlyValid = this.checked;
   shownMax = PAGE_SIZE;
-  render();
+  ensureAll(function(){ render(); });
 });
 
 // 收藏按钮事件委托
@@ -429,13 +488,13 @@ function renderCities(){
   var all = document.createElement('span');
   all.className = 'tag' + (curCity==='全部'?' on':'');
   all.textContent = '全部城市 ('+ list.reduce(function(a,c){return a+c.count},0) +')';
-  all.addEventListener('click', function(){ curCity='全部'; shownMax = PAGE_SIZE; renderCities(); render(); cityZone.classList.remove('show'); cityToggle.classList.remove('open'); document.getElementById('cityState').textContent = '展开'; });
+  all.addEventListener('click', function(){ curCity='全部'; shownMax = PAGE_SIZE; renderCities(); ensureAll(function(){ render(); }); cityZone.classList.remove('show'); cityToggle.classList.remove('open'); document.getElementById('cityState').textContent = '展开'; });
   tagEl.appendChild(all);
   list.forEach(function(c){
     var s = document.createElement('span');
     s.className = 'tag' + (curCity===c.name?' on':'');
     s.textContent = c.name + ' (' + c.count + ')';
-    s.addEventListener('click', function(){ curCity = c.name; shownMax = PAGE_SIZE; renderCities(); render(); });
+    s.addEventListener('click', function(){ curCity = c.name; shownMax = PAGE_SIZE; renderCities(); ensureAll(function(){ render(); }); });
     tagEl.appendChild(s);
   });
 }
@@ -484,7 +543,7 @@ function toggleFav(cd){
   if(i >= 0){ FAVS.splice(i,1); } else { FAVS.push(cd); }
   saveFavs(); render();
 }
-function toggleFavMode(){ favMode = !favMode; document.getElementById('favToggle').classList.toggle('on', favMode); document.getElementById('favToggle').innerHTML = favMode ? '★ 返回全部' : '★ 我的收藏 (<span id="favCount">'+FAVS.length+'</span>)'; shownMax = PAGE_SIZE; render(); }
+function toggleFavMode(){ favMode = !favMode; document.getElementById('favToggle').classList.toggle('on', favMode); document.getElementById('favToggle').innerHTML = favMode ? '★ 返回全部' : '★ 我的收藏 (<span id="favCount">'+FAVS.length+'</span>)'; shownMax = PAGE_SIZE; ensureAll(function(){ render(); }); }
 saveFavs();
 var shownMax = PAGE_SIZE;
 
@@ -538,18 +597,28 @@ function render(){
   else { mw.style.display = 'none'; }
 }
 
-// 加载更多
+// 加载更多：先拉下一片数据，再渲染更多
 document.getElementById('moreBtn').addEventListener('click', function(){
+  var btn = document.getElementById('moreBtn');
+  btn.textContent = '正在加载…';
   shownMax += 20;
-  render();
+  ensureNext(function(){
+    btn.textContent = '加载更多岗位';
+    render();
+  });
 });
 
-// 搜索
+// 搜索（需全量数据）
 document.getElementById('q').addEventListener('input', function(e){
   kw = e.target.value.trim();
   if(kw){ curLetter='全部'; curCity='全部'; shownMax = PAGE_SIZE; renderCities(); }
   shownMax = PAGE_SIZE;
-  render();
+  if(kw){
+    document.getElementById('stShow').textContent = '…';
+    ensureAll(function(){ render(); });
+  } else {
+    render();
+  }
 });
 
 renderCities();
@@ -576,7 +645,9 @@ for key in COLS_KEYS:
 js_cols = json.dumps(cols_data, ensure_ascii=False)
 
 HTML_DOC = HTML_DOC.replace('__UPDATED__', esc(updated_at)).replace('__TOTAL__', str(total)).replace('__CITIES__', str(len(all_cities)))
-HTML_DOC = HTML_DOC.replace('__JS_DATA__', js_data).replace('__JS_CITIES__', js_cities)
+HTML_DOC = HTML_DOC.replace('__JS_CHUNK0__', js_chunk0).replace('__JS_CITIES__', js_cities)
+HTML_DOC = HTML_DOC.replace('__CHUNK_TOTAL__', str(chunk_total))
+HTML_DOC = HTML_DOC.replace('__ST_VALID__', str(st_valid)).replace('__ST_OFF__', str(st_off))
 HTML_DOC = HTML_DOC.replace('__COLS_DATA__', js_cols)
 # 心智障碍可投数
 HTML_DOC = HTML_DOC.replace('心智障碍可投  条岗位', '心智障碍可投 ' + str(total_mh) + ' 条岗位')
