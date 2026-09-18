@@ -55,6 +55,14 @@ def main():
     if st == 200 and html:
         if '行隅' not in html:
             problems.append('页面未含站点标识"行隅"')
+        # 所有权指纹校验：线上页面必须保留唯一性标识（被篡改/替换会丢）
+        if 'xingyu-origin-2026' not in html:
+            problems.append('线上页面丢失所有权指纹 xingyu-origin-2026，疑似被篡改或替换')
+        vm = re.search(r'class="ver">v?([0-9.]+)<', html)
+        if vm:
+            print('线上版本:', vm.group(1))
+        else:
+            problems.append('线上页面未找到版本号标记')
         m = re.search(r'数据更新[:：]\s*([0-9]{4})-([0-9]{2})-([0-9]{2})', html)
         if m:
             upd = datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))

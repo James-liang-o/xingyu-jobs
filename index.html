@@ -553,6 +553,8 @@ function ensureNext(cb){
 
 // 字母条：默认收起，点击展开
 var cityToggle = document.getElementById('cityToggle');
+// 防iframe嵌套冒充本站
+try{ if(window.top && window.top !== window.self){ window.top.location.replace(window.self.location.href); } }catch(e){}
 var cityZone = document.getElementById('cityZone');
 cityToggle.addEventListener('click', function(){
   var open = cityZone.classList.toggle('show');
