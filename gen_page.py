@@ -455,8 +455,8 @@ HTML_DOC = """<!DOCTYPE html>
   </div>
   <div class="ap-card">
     <h3>项目原创与保护</h3>
-    <p>行隅为<strong>大学生创新创业大赛原创项目</strong>，网站、标识、专栏内容与整体设计均由作者原创开发，请勿盗用或冒名参赛。</p>
-    <p>本站全部代码在公开代码托管平台留有<strong>带时间戳的提交记录</strong>（可精确到分钟、不可篡改），配合页面"所有权验证"指纹，可作为原创时间的最直接证明。发现盗用可向大赛组委会举报，并出示本页指纹与代码平台提交记录。</p>
+    <p>行隅为<strong>原创项目</strong>，网站、标识、专栏内容与整体设计均由作者原创开发，请勿盗用或冒名使用。</p>
+    <p>本站全部代码在公开代码托管平台留有<strong>带时间戳的提交记录</strong>（可精确到分钟、不可篡改），配合页面"所有权验证"指纹，可作为原创时间的最直接证明。</p>
   </div>
   <div class="ap-card">
     <h3>免责声明</h3>
@@ -468,7 +468,7 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 
 <div class="site-footer">
-  <div>© 2026 行隅 · 心智障碍就业导航 · 原创开发 <span class="ver">v2.15</span> · <a href="#about" class="fm">大创赛原创项目，盗用追责</a></div>
+  <div>© 2026 行隅 · 心智障碍就业导航 · 原创开发 <span class="ver">v2.15</span> · <a href="#about" class="fm">原创项目 · 盗用追责</a></div>
   <div><a href="mailto:1739528214@qq.com?subject=行隅投稿" class="fm">投稿 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅合作" class="fm">合作 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅信息纠错%2F举报" class="fm">信息纠错 · 举报 ›</a>　<a href="#verify" class="fm">所有权验证 ›</a></div>
 </div>
 
