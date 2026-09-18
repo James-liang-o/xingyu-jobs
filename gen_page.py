@@ -153,6 +153,12 @@ HTML_DOC = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://busuanzi.icp.gov.cn https://busuanzi.ibruce.info; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2B6DE8">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="行隅">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- xingyu-origin: 本站由创建者原创开发，所有权指纹 __OWN_HASH__（#verify 可验证） -->
 <title>行隅 · 心智障碍就业导航 - 全国助残岗位信息平台</title>
@@ -442,6 +448,30 @@ HTML_DOC = """<!DOCTYPE html>
   /* 统计条 */
   .stat{display:flex;gap:16px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:12px;color:var(--sub)}
   .stat b{color:var(--primary);font-size:15px}
+  /* 数据总览 */
+  .statpage{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:30;overflow-y:auto;padding:0 16px 30px}
+  .statcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  .statcard h3{margin:0 0 12px;font-size:16px;color:var(--main)}
+  .stat-sum{display:flex;flex-wrap:wrap;gap:10px}
+  .stat-sum .s{flex:1 1 30%;min-width:96px;background:var(--primary-bg);border-radius:12px;padding:12px;text-align:center}
+  .stat-sum .s b{display:block;font-size:22px;color:var(--primary);line-height:1.4}
+  .stat-sum .s span{font-size:12px;color:var(--sub)}
+  .bar-list .br{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:13px}
+  .bar-list .br .bn{flex:0 0 96px;color:var(--main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-list .br .bt{flex:0 0 44px;text-align:right;color:var(--primary);font-weight:700}
+  .bar-list .br .bw{flex:1;background:var(--primary-bg);border-radius:6px;height:16px;overflow:hidden}
+  .bar-list .br .bf{display:block;height:100%;background:var(--primary);border-radius:6px;min-width:2px}
+  .bar-pct .pp{display:flex;height:26px;border-radius:8px;overflow:hidden;margin-bottom:10px}
+  .bar-pct .pp .pv{background:var(--primary);color:#fff;font-size:12px;line-height:26px;text-align:center}
+  .bar-pct .pp .po{background:#F0A6A6;color:#fff;font-size:12px;line-height:26px;text-align:center}
+  .bar-pct .lg{font-size:13px;color:var(--sub);display:flex;gap:18px}
+  .bar-pct .lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  html.dark .statpage{background:transparent}
+  html.dark .statcard{background:#1E293B;border-color:#334155}
+  html.dark .statcard h3{color:#E2E8F0}
+  html.dark .stat-sum .s{background:#0F172A}
+  html.dark .bar-list .br .bn{color:#E2E8F0}
+  html.dark .bar-list .br .bw{background:#334155}
 </style>
 </head>
 <body>
@@ -454,6 +484,8 @@ HTML_DOC = """<!DOCTYPE html>
     <button class="ab" id="hcBtn" onclick="toggleHC()" title="高对比度模式">高对比</button>
     <button class="ab" id="darkBtn" onclick="toggleDark()" title="深色模式">深色</button>
     <button class="ab" id="readBtn" onclick="toggleRead()" title="朗读当前列表">朗读</button>
+    <button class="ab" onclick="nearbyJobs()" title="定位到我所在城市，自动筛选该城市岗位">附近岗位</button>
+    <button class="ab" onclick="openStats()" title="查看岗位数据总览与分布">数据总览</button>
   </div>
 </div>
 <div class="adbar"><span class="adlabel">广告位</span><div class="adbody" id="adTop"></div></div>
@@ -486,6 +518,17 @@ HTML_DOC = """<!DOCTYPE html>
     <button type="button" class="colp-more-btn" id="colMoreBtn">加载更多</button>
     <div class="colp-more-cnt" id="colMoreCnt"></div>
   </div>
+</div>
+<div class="statpage" id="statsPage" style="display:none">
+  <div class="ap-head">
+    <button class="back-btn" onclick="showHome()">← 返回首页</button>
+    <span class="ap-title">数据总览</span>
+  </div>
+  <div class="statcard" id="statsSummary"></div>
+  <div class="statcard"><h3>城市岗位 TOP10</h3><div class="bar-list" id="statsCity"></div></div>
+  <div class="statcard"><h3>岗位类型分布 TOP8</h3><div class="bar-list" id="statsDuty"></div></div>
+  <div class="statcard"><h3>有效 / 失效</h3><div class="bar-pct" id="statsPct"></div></div>
+  <div class="statcard" style="color:var(--sub);font-size:13px;line-height:1.7">数据来源于公开渠道岗位聚合，每日自动更新。统计基于当前已收录的全部岗位，仅供参考。</div>
 </div>
 <div class="citytoggle" id="cityToggle"><span class="ct">城市筛选 <span class="arrow">▼</span></span><span class="ctstate" id="cityState">展开</span></div>
 <div class="cityzone" id="cityZone">
@@ -560,7 +603,7 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 
 <div class="site-footer">
-  <div>© 2026 行隅 · 心智障碍就业导航 · 原创开发 <span class="ver">v2.19</span></div>
+  <div>© 2026 行隅 · 心智障碍就业导航 · 原创开发 <span class="ver">v2.20</span></div>
   <div><a class="fm" onclick="openShare()" style="cursor:pointer">分享站点 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅投稿" class="fm">投稿 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅合作" class="fm">合作 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅信息纠错%2F举报" class="fm">信息纠错 · 举报 ›</a>　<a href="#about" class="fm">原创项目 · 盗用追责 ›</a>　<a href="#verify" class="fm">所有权验证 ›</a></div>
   <div class="pv">本站累计访问 <b id="busuanzi_value_site_pv"></b> 次 · 访客 <b id="busuanzi_value_site_uv"></b> 人</div>
 </div>
@@ -756,6 +799,8 @@ renderAds();
 // 专栏渲染
 // ===== 专栏（数据由 articles.json 生成） =====
 var COLS_DATA = __COLS_DATA__;
+var colTotal = 0;
+for(var cki in COLS_DATA){ colTotal += (COLS_DATA[cki] || []).length; }
 var COLDEF = {
   'social':  {'ico':'化','tt':'社会化专栏','sub':'帮助心智障碍者融入社会','grp':'job'},
   'doing':   {'ico':'行','tt':'他们正在做','sub':'各地机构与真实案例','grp':'job'},
@@ -896,6 +941,7 @@ function showZoneOf(){
   showZone(COLDEF[colKey] ? COLDEF[colKey].grp : 'job');
 }
 function showHome(){
+  document.getElementById('statsPage').style.display = 'none';
   document.getElementById('colPage').style.display = 'none';
   document.getElementById('aboutPage').style.display = 'none';
   document.getElementById('verifyPage').style.display = 'none';
@@ -984,10 +1030,17 @@ window.addEventListener('hashchange', function(){
   if(m && COLDEF[m[1]]){ showCol(m[1]); }
   else if(location.hash === '#about'){ showAbout(); }
   else if(location.hash === '#verify'){ showVerify(); }
+  else if(location.hash === '#stats'){ openStats(); }
   else if(location.hash.indexOf('#job/') === 0){ showJob(location.hash.slice(5)); }
   else { showHome(); }
 });
 renderColGrid();
+// PWA：注册 Service Worker（仅 http/https 环境，file:// 跳过）
+if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
 
 
 // 城市标签
@@ -1182,8 +1235,8 @@ function render(){
     shown++;
     var card = document.createElement('div'); card.className = 'card' + (isOff?' expired':'');
     var dl = fmtDeadline(j.dl), pb = fmtTime(j.pb);
-    var badge = isOff ? '<span class="badge off">已失效</span>' : '<span class="badge new">新发布</span>';
-    if(!isOff && dl && dl.indexOf('天后截止')>=0) badge = '<span class="badge hot">即将截止</span>';
+    var badge = isOff ? '<span class="badge off">已失效</span>' : (isNewJob(j.pb) ? '<span class="badge new">新发布</span>' : '');
+    if(!isOff && dl && dl.indexOf('天后截止')>=0) badge = badge + '<span class="badge hot">即将截止</span>';
     var mhTag = j.mh ? '<span class="badge mh">心智障碍可投</span>' : '';
     var favCls = isFav(j.cd) ? ' on' : '';
     var du = safeUrl(j.du || j.u);
@@ -1204,6 +1257,7 @@ function render(){
       '<div class="foot"><div class="time">'+pb+(dl?' · <span class="dl">'+dl+'</span>':'')+'</div>'+
       '<div class="btns">'+
         '<button class="btn ghost" data-cd="'+esc(j.cd)+'">查看详情</button>'+
+        '<button class="btn share" data-scd="'+esc(j.cd)+'">转发</button>'+
         '<a class="btn orig" target="_blank" rel="noopener noreferrer" href="'+companyUrl(j.o)+'">查公司</a>'+
       '</div></div>';
     el.appendChild(card);
@@ -1236,9 +1290,172 @@ document.getElementById('list').addEventListener('click', function(e){
       showJob(t.getAttribute('data-cd'));
       return;
     }
+    if(t.classList && t.classList.contains('btn') && t.classList.contains('share')){
+      shareJob(t.getAttribute('data-scd'));
+      return;
+    }
     t = t.parentNode;
   }
 });
+
+// ===== 单条岗位转发（系统分享优先，失败复制文本） =====
+function shareJob(cd){
+  var j = null;
+  for(var i = 0; i < JOBS.length; i++){ if(String(JOBS[i].cd) === String(cd)){ j = JOBS[i]; break; } }
+  if(!j){
+    ensureAll(function(){ shareJob(cd); });
+    return;
+  }
+  var link = safeUrl(j.du || j.u);
+  var lines = [
+    '【行隅·岗位推荐】',
+    '岗位：' + (j.n || ''),
+    '公司：' + (j.o || '—'),
+    '地点：' + (j.l || '—'),
+    (j.t ? '类型：' + j.t : ''),
+    (j.e ? '学历：' + j.e : ''),
+    (j.m ? '招聘：' + j.m + ' 人' : ''),
+    (j.mh ? '适合：心智障碍人士可投' : ''),
+    (j.ds ? '残疾类型：' + j.ds : ''),
+    (j.pb ? '发布：' + j.pb : ''),
+    '详情：' + (link && link !== '#' ? link : 'https://james-liang-o.github.io/xingyu-jobs/')
+  ].filter(function(x){ return x; }).join('\\n');
+  var shareText = lines + '\\n—— 来自「行隅」心智障碍就业导航（免费公益平台）';
+  if(navigator.share){
+    navigator.share({ title: '行隅·岗位推荐', text: shareText }).catch(function(){});
+  } else {
+    copyText(shareText, '岗位信息已复制，去微信/QQ粘贴发送');
+  }
+}
+function copyText(txt, okMsg){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast(okMsg); }).catch(function(){ toast(okMsg); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast(okMsg); }catch(_){ toast(okMsg); }
+    document.body.removeChild(ta);
+  }
+}
+
+// ===== 附近岗位：点了才定位，拒绝/失败只提示、不影响使用 =====
+var NEAR_CITIES = {'北京市':[116.4,39.9],'上海市':[121.47,31.23],'天津市':[117.2,39.13],'重庆市':[106.55,29.56],
+  '广州市':[113.26,23.13],'深圳市':[114.06,22.55],'珠海市':[113.58,22.27],'佛山市':[113.12,23.02],'东莞市':[113.75,23.02],'中山市':[113.39,22.52],'惠州市':[114.42,23.11],'汕头市':[116.68,23.35],'湛江市':[110.36,21.27],
+  '杭州市':[120.15,30.29],'宁波市':[121.55,29.88],'温州市':[120.7,28.0],'嘉兴市':[120.76,30.75],'绍兴市':[120.58,30.0],'金华市':[119.65,29.08],'台州市':[121.42,28.66],
+  '南京市':[118.8,32.06],'苏州市':[120.62,31.32],'无锡市':[120.3,31.57],'常州市':[119.97,31.81],'南通市':[120.86,31.98],'徐州市':[117.18,34.26],'扬州市':[119.41,32.39],'盐城市':[120.16,33.35],'淮安市':[119.02,33.61],'连云港市':[119.22,34.6],'泰州市':[119.92,32.46],'镇江市':[119.42,32.19],
+  '武汉市':[114.31,30.59],'宜昌市':[111.29,30.69],'襄阳市':[112.14,32.04],'荆州市':[112.24,30.33],'黄冈市':[114.87,30.45],
+  '成都市':[104.07,30.67],'绵阳市':[104.68,31.47],'德阳市':[104.4,31.13],'宜宾市':[104.62,28.77],'泸州市':[105.44,28.87],'南充市':[106.11,30.84],
+  '长沙市':[112.94,28.23],'株洲市':[113.13,27.83],'湘潭市':[112.94,27.83],'岳阳市':[113.13,29.37],'常德市':[111.7,29.03],'衡阳市':[112.57,26.89],
+  '郑州市':[113.63,34.75],'洛阳市':[112.45,34.62],'开封市':[114.31,34.8],'新乡市':[113.93,35.3],'南阳市':[112.53,33.0],
+  '西安市':[108.94,34.34],'宝鸡市':[107.14,34.36],'咸阳市':[108.71,34.33],'渭南市':[109.51,34.5],
+  '济南市':[117.12,36.65],'青岛市':[120.38,36.07],'烟台市':[121.45,37.46],'潍坊市':[119.16,36.71],'临沂市':[118.36,35.1],'济宁市':[116.59,35.41],'淄博市':[118.05,36.81],
+  '福州市':[119.3,26.08],'厦门市':[118.09,24.48],'泉州市':[118.68,24.87],'漳州市':[117.65,24.51],'莆田市':[119.01,25.45],'宁德市':[119.55,26.67],
+  '合肥市':[117.23,31.82],'芜湖市':[118.43,31.33],'蚌埠市':[117.39,32.92],'阜阳市':[115.81,32.89],
+  '南昌市':[115.86,28.68],'赣州市':[114.93,25.83],'九江市':[116.0,29.71],'上饶市':[117.94,28.45],
+  '石家庄市':[114.51,38.04],'唐山市':[118.18,39.63],'保定市':[115.46,38.87],'邯郸市':[114.54,36.63],'廊坊市':[116.7,39.52],
+  '太原市':[112.55,37.87],'大同市':[113.3,40.08],'临汾市':[111.52,36.09],
+  '哈尔滨市':[126.53,45.8],'齐齐哈尔市':[123.92,47.35],'大庆市':[125.1,46.59],'牡丹江市':[129.63,44.58],
+  '长春市':[125.32,43.9],'吉林市':[126.55,43.84],'延边州':[129.51,42.9],
+  '沈阳市':[123.43,41.8],'大连市':[121.61,38.91],'鞍山市':[122.99,41.11],'抚顺市':[123.96,41.88],'锦州市':[121.13,41.1],
+  '呼和浩特市':[111.75,40.84],'包头市':[109.84,40.66],'鄂尔多斯市':[109.78,39.61],
+  '昆明市':[102.83,24.88],'大理州':[100.23,25.6],'曲靖市':[103.8,25.49],'玉溪市':[102.55,24.35],
+  '贵阳市':[106.63,26.65],'遵义市':[106.93,27.73],
+  '南宁市':[108.37,22.82],'桂林市':[110.29,25.27],'柳州市':[109.42,24.33],'北海市':[109.12,21.48],
+  '海口市':[110.32,20.03],'三亚市':[109.51,18.25],
+  '兰州市':[103.83,36.06],'天水市':[105.72,34.58],'嘉峪关市':[98.29,39.77],
+  '西宁市':[101.78,36.62],
+  '银川市':[106.23,38.49],
+  '乌鲁木齐市':[87.62,43.82],
+  '拉萨市':[91.14,29.65],
+  '香港特别行政区':[114.17,22.32],'澳门特别行政区':[113.55,22.2]};
+function nearbyJobs(){
+  if(!('geolocation' in navigator)){
+    toast('当前浏览器不支持定位，可在城市筛选中手动选择');
+    return;
+  }
+  toast('正在定位…请允许浏览器获取位置权限');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat = pos.coords.latitude, lng = pos.coords.longitude;
+    var best = null, bestD = 1e9;
+    for(var c in NEAR_CITIES){
+      var dLat = lat - NEAR_CITIES[c][1], dLng = lng - NEAR_CITIES[c][0];
+      var d = dLat*dLat + dLng*dLng;
+      if(d < bestD){ bestD = d; best = c; }
+    }
+    selCities = best ? [best] : [];
+    shownMax = PAGE_SIZE; renderFilters();
+    ensureAll(function(){
+      render();
+      if(best) toast('已定位到「' + best + '」，已为你筛选该城市岗位');
+      else toast('未能匹配到附近城市，请在城市筛选中手动选择');
+    });
+  }, function(err){
+    toast(err && err.code === 1 ? '未获得定位权限，可在城市筛选中手动选择城市' : '定位失败，可在城市筛选中手动选择城市');
+  }, {timeout: 8000, maximumAge: 600000});
+}
+
+// ===== 数据总览 =====
+function openStats(){
+  document.getElementById('statsPage').style.display = 'block';
+  document.getElementById('statsPage').scrollTop = 0;
+  window.scrollTo(0, 0);
+  renderStats();
+  if(location.hash !== '#stats'){ try{ history.replaceState(null, '', '#stats'); }catch(e){} }
+}
+// 是否3天内新发布
+function isNewJob(pb){
+  if(!pb) return false;
+  var m = String(pb).match(/(\d{4})[年\/-](\d{1,2})[月\/-](\d{1,2})/);
+  if(!m) return false;
+  var d = new Date(+m[1], +m[2]-1, +m[3]);
+  return Math.floor((Date.now() - d.getTime())/86400000) <= 3;
+}
+// 渲染数据总览
+function renderStats(){
+  ensureAll(function(){
+    var jobs = JOBS, total = jobs.length, valid = 0, mh = 0, cityCnt = {};
+    for(var i = 0; i < total; i++){
+      var j = jobs[i];
+      if(j.st !== 'expired') valid++;
+      if(j.mh) mh++;
+      var c = j.c || j.p || '其他';
+      cityCnt[c] = (cityCnt[c] || 0) + 1;
+    }
+    var off = total - valid;
+    document.getElementById('statsSummary').innerHTML =
+      '<div class="stat-sum">'+
+        '<div class="s"><b>' + total + '</b><span>岗位总数</span></div>'+
+        '<div class="s"><b>' + valid + '</b><span>有效岗位</span></div>'+
+        '<div class="s"><b>' + off + '</b><span>已失效</span></div>'+
+        '<div class="s"><b>' + Object.keys(cityCnt).length + '</b><span>覆盖城市</span></div>'+
+        '<div class="s"><b>' + mh + '</b><span>心智可投</span></div>'+
+        '<div class="s"><b>' + colTotal + '</b><span>专栏文章</span></div>'+
+      '</div>';
+    var cityTop = Object.keys(cityCnt).map(function(k){ return [k, cityCnt[k]]; }).sort(function(a,b){ return b[1]-a[1]; }).slice(0,10);
+    var maxC = cityTop.length ? cityTop[0][1] : 1;
+    document.getElementById('statsCity').innerHTML = cityTop.map(function(x){
+      return '<div class="br"><span class="bn">'+esc(x[0])+'</span><span class="bw"><span class="bf" style="width:'+Math.max(2, Math.round(x[1]/maxC*100))+'%"></span></span><span class="bt">'+x[1]+'</span></div>';
+    }).join('') || '<div style="color:var(--sub)">暂无数据</div>';
+    // 职业大类统计：取 duty 第一个分段的干净名称
+    var dutyCnt = {};
+    for(var k2 = 0; k2 < total; k2++){
+      var dy = jobs[k2].dy || '';
+      var seg = dy.split('|')[0].trim();
+      if(!seg) continue;
+      dutyCnt[seg] = (dutyCnt[seg] || 0) + 1;
+    }
+    var dutyTop = Object.keys(dutyCnt).map(function(k){ return [k, dutyCnt[k]]; }).sort(function(a,b){ return b[1]-a[1]; }).slice(0,8);
+    var maxD = dutyTop.length ? dutyTop[0][1] : 1;
+    document.getElementById('statsDuty').innerHTML = dutyTop.map(function(x){
+      return '<div class="br"><span class="bn">'+esc(x[0])+'</span><span class="bw"><span class="bf" style="width:'+Math.max(2, Math.round(x[1]/maxD*100))+'%"></span></span><span class="bt">'+x[1]+'</span></div>';
+    }).join('') || '<div style="color:var(--sub)">暂无数据</div>';
+    var pv = total ? Math.round(valid/total*100) : 0;
+    document.getElementById('statsPct').innerHTML =
+      '<div class="pp"><div class="pv" style="width:'+pv+'%">有效 '+valid+'</div><div class="po" style="width:'+(100-pv)+'%">失效 '+off+'</div></div>'+
+      '<div class="lg"><span><i style="background:var(--primary)"></i>有效岗位</span><span><i style="background:#F0A6A6"></i>已失效岗位</span></div>';
+  });
+}
 
 // 加载更多：先拉下一片数据，再渲染更多
 document.getElementById('moreBtn').addEventListener('click', function(){
