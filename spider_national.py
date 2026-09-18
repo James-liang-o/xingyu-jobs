@@ -296,12 +296,10 @@ def main():
         print('无上一轮数据（首次运行）:', e)
 
     # ===== 来源1：中国残联动态接口（全国） =====
-    print('[1/6] 中国残联动态接口（全国，全量翻页，仅保留心智障碍）...')
+    print('[1/6] 中国残联动态接口（全国，全量翻页）...')
     api_jobs = fetch_national_api(pages=200, page_size=500)
-    # 只保留心智障碍可投岗位（智力残疾 / 精神残疾）
-    api_mh = [j for j in api_jobs if j.get('is_mh')]
-    jobs.extend(api_mh)
-    print('  全国动态岗位数:', len(api_jobs), '| 保留心智障碍可投:', len(api_mh))
+    jobs.extend(api_jobs)
+    print('  全国动态岗位数:', len(api_jobs))
 
     # ===== 来源2：甘肃省残疾人就业创业网络服务平台 =====
     print('[2/6] 甘肃省残疾人就业创业网络服务平台...')
