@@ -335,6 +335,8 @@
   .stat-sum{display:flex;flex-wrap:wrap;gap:10px}
   .stat-sum .s{flex:1 1 30%;min-width:96px;background:var(--primary-bg);border-radius:12px;padding:12px;text-align:center}
   .stat-sum .s b{display:block;font-size:22px;color:var(--primary);line-height:1.4}
+  .stat-sum .s b.ok{color:#0F7B3E}
+  .stat-sum .s b.off{color:#94A3B8}
   .stat-sum .s span{font-size:12px;color:var(--sub)}
   .bar-list .br{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:13px}
   .bar-list .br .bn{flex:0 0 96px;color:var(--main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1724,6 +1726,8 @@ function renderStats(){
     document.getElementById('statsSummary').innerHTML =
       '<div class="stat-sum">'+
         '<div class="s"><b>' + total + '</b><span>岗位总数</span></div>'+
+        '<div class="s"><b class="ok">' + valid + '</b><span>有效岗位</span></div>'+
+        '<div class="s"><b class="off">' + (total - valid) + '</b><span>已失效</span></div>'+
         '<div class="s"><b>' + Object.keys(cityCnt).length + '</b><span>覆盖城市</span></div>'+
         '<div class="s"><b>' + soc + '</b><span>国企央企事业单位</span></div>'+
         '<div class="s"><b>' + colTotal + '</b><span>专栏文章</span></div>'+
