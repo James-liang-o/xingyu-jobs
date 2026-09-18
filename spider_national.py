@@ -29,6 +29,38 @@ def fetch(url, timeout=30, retries=2):
             time.sleep(1)
     return None
 
+CENTRAL_KEYS = ['中国联通','中国移动','中国电信','国家电网','南方电网','中国石油','中国石化','中国海油','中石油','中石化',
+'中国建筑','中国中铁','中国铁建','中国交建','中国邮政','中国银行','工商银行','农业银行','建设银行','交通银行','邮储银行',
+'中国人寿','中国人保','中国烟草','中粮集团','国投','华润','中核','航天科技','航天科工','航空工业','中国船舶','兵器工业',
+'中国电子','中国中车','中国能建','中国电建','中国化学','中国五矿','中广核','国家能源集团','中国华能','中国大唐','中国华电',
+'国家电投','中国三峡','中国宝武','鞍钢集团','中国铝业','中远海运','中国中化','招商局','中信集团','光大集团','中国国新',
+'中国诚通','中国航发','中国融通','国家开发银行','进出口银行','农业发展银行','中国一汽','东风汽车','中国商飞','中国旅游集团',
+'中国黄金','中国盐业','中国通用','新兴际华','中国节能','中国建材','中国有色','中国钢研','中国中冶','中国航空油料']
+STATE_KEYS = ['集团有限公司','集团股份公司','省电力','市电力','水务集团','燃气集团','公交集团','地铁集团','轨道交通',
+'城投','城建集团','交通投资','交投集团','铁路投资','国有资本','国资委','烟草公司','烟草专卖','供电公司','发电集团',
+'能源集团','建设投资集团','开发投资','港口集团','机场集团','粮油集团','供销社','粮食集团','盐业公司','盐业集团',
+'自来水公司','热力公司','供热公司','供水集团','高速公路集团']
+GOV_KEYS = ['人民政府','街道办事处','机关事务','委员会','残疾人联合会','研究院','科学院','大学','学院','博物馆','图书馆',
+'人民医院','中医院','中心医院','妇幼保健院','体育职业学院','人才服务中心','就业服务中心','劳动保障']
+
+def classify_nature(pr, name):
+    """识别单位性质：pr 字段优先，名称关键词兜底。返回 '' / 央企 / 国企 / 事业单位"""
+    if pr in ('央企', '国企', '事业单位', '机关'):
+        return pr
+    n = name or ''
+    if not n:
+        return ''
+    if any(k in n for k in CENTRAL_KEYS):
+        return '央企'
+    if any(k in n for k in GOV_KEYS):
+        return '事业单位'
+    if any(k in n for k in STATE_KEYS):
+        return '国企'
+    m = re.match(r'^([一-龥]{2,4})(省|市|县|自治州|自治县)', n)
+    if m and any(k in n for k in ['集团', '电力', '供水', '燃气', '热力', '公交', '地铁', '供热', '自来水']):
+        return '国企'
+    return ''
+
 def html_text(b):
     if not b:
         return ''
@@ -115,7 +147,7 @@ def fetch_hubei_api(pages=3):
             duty = re.sub(r'<[^>]+>', ' ', rec.get('jobInfo', '') or '')
             duty = re.sub(r'\s+', ' ', duty).strip()
             jobs.append({
-                'code': str(rec.get('jobId', '')), 'owner': '', 'org': rec.get('companyName', ''),
+                'code': str(rec.get('jobId', '')), 'owner': classify_nature('', rec.get('companyName', '')), 'org': rec.get('companyName', ''),
                 'name': rec.get('job', ''), 'type': '',
                 'duty': duty[:200],
                 'num': '', 'edu': '',
@@ -158,7 +190,7 @@ def fetch_prov_api(host, pages=3):
             dis_str = rec.get('distypeStr', '') or ''
             is_mh = ('智力残疾' in dis_str or '精神残疾' in dis_str or '智力残疾' in dis_types or '精神残疾' in dis_types)
             jobs.append({
-                'code': rec.get('id', ''), 'owner': '', 'org': ci.get('companyName', ''),
+                'code': rec.get('id', ''), 'owner': classify_nature(ci.get('pr', ''), ci.get('companyName', '')), 'org': ci.get('companyName', ''),
                 'name': rec.get('jobName', ''), 'type': rec.get('jobType', ''),
                 'duty': ' | '.join([x for x in [rec.get('jobTop', ''), rec.get('jobNext', ''), rec.get('jobPost', '')] if x]),
                 'num': rec.get('jobNumber', ''), 'edu': rec.get('edu', ''),
@@ -210,7 +242,7 @@ def fetch_national_api(pages=60, page_size=500):
             is_mh = ('智力残疾' in dis_str or '精神残疾' in dis_str or '智力残疾' in dis_types or '精神残疾' in dis_types)
             # 时效字段：createTime 发布时间 / updateTime 更新时间 / endTime 招聘截止
             jobs.append({
-                'code': rec.get('id', ''), 'owner': '', 'org': ci.get('companyName', ''),
+                'code': rec.get('id', ''), 'owner': classify_nature(ci.get('pr', ''), ci.get('companyName', '')), 'org': ci.get('companyName', ''),
                 'name': rec.get('jobName', ''), 'type': rec.get('jobType', ''),
                 'duty': ' | '.join([x for x in [rec.get('jobTop', ''), rec.get('jobNext', ''), rec.get('jobPost', '')] if x]),
                 'num': rec.get('jobNumber', ''), 'edu': rec.get('edu', ''),

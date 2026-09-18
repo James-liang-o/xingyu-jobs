@@ -43,12 +43,16 @@ except Exception:
 
 jobs = data['jobs']
 updated_at = data['updated_at']
-total = data['total']
 total_mh = data.get('total_mh', 0)
 
 # 精简字段，只留展示所需
 rows = []
+seen_codes = set()
 for j in jobs:
+    _cd = str(j.get('code', ''))
+    if _cd in seen_codes:
+        continue
+    seen_codes.add(_cd)
     rows.append({
         'n': j.get('name', ''),
         'o': j.get('org', ''),
@@ -69,7 +73,9 @@ for j in jobs:
         'ds': j.get('dis_str', ''),
         'st': j.get('status', 'active'),
         'cd': str(j.get('code', '')),
+        'ow': j.get('owner', ''),
     })
+total = len(rows)
 
 # 城市->岗位 映射（用于首字母索引）
 city_letters = {}
@@ -126,7 +132,7 @@ for r in rows:
     js_rows.append({
         'n': r['n'], 'o': r['o'], 'l': r['l'], 'c': r['c'], 'e': r['e'], 'm': r['m'],
         't': r['t'], 'pb': r['pb'], 'dl': r['dl'], 'dy': r['dy'], 's': r['s'], 'u': r['u'], 'st': r['st'],
-        'mh': r['mh'], 'ds': r['ds'], 'cd': r['cd'], 'du': detail_url(r),
+        'mh': r['mh'], 'ds': r['ds'], 'cd': r['cd'], 'du': detail_url(r), 'ow': r['ow'],
     })
 # 分片：岗位数据按每片 600 条拆成独立 js 文件，页面按需加载；首片内嵌 HTML 保证首屏秒开
 # chunk 文件用回调函数交付数据（window.__chunkCb(idx, data)），避免依赖 script onload 时序
@@ -272,6 +278,7 @@ HTML_DOC = """<!DOCTYPE html>
   .badge.hot{background:#D1FAE5;color:var(--ok)}
   .badge.norm{background:var(--primary-bg);color:var(--primary)}
   .badge.mh{background:#C7F9CC;color:#0F7B3E;border:1px solid #6EE7A0}
+  .badge.soc{background:#2563EB;color:#fff}
   .card .nm a.jlink{color:var(--text);text-decoration:none}
   .card .nm a.jlink:hover{color:var(--primary)}
   .card .ds{font-size:12px;color:#0F7B3E;background:#F0FDF4;border-radius:6px;padding:4px 8px;margin-top:6px;display:inline-block;line-height:1.4}
@@ -566,11 +573,11 @@ HTML_DOC = """<!DOCTYPE html>
     <div class="fp-grid">
       <button class="fp-item" id="fpRecent" onclick="toggleRecent()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg><span>最近3天</span></button>
       <button class="fp-item" id="fpGuide" onclick="openGuide()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg><span>帮我找岗位</span></button>
+      <button class="fp-item" id="fpSoc" onclick="toggleSocFilter()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 3v6c0 5-3.2 8.4-7 11-3.8-2.6-7-6-7-11V5z"></path><path d="M9 12l2 2 4-4"></path></svg><span>国企央企</span></button>
       <button class="fp-item" id="fpHis" onclick="toggleHisMode()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l3 3"></path></svg><span>历史浏览</span></button>
       <button class="fp-item" id="fpFav" onclick="toggleFavMode()"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"></path></svg><span>我的收藏</span></button>
       <button class="fp-item" onclick="printList()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg><span>打印清单</span></button>
       <button class="fp-item" onclick="showPrep()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h6M9 12h6M9 18h6"></path><path d="M5 3h14a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"></path></svg><span>求职准备</span></button>
-      <button class="fp-item" onclick="openIv()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg><span>面试陪练</span></button>
       <button class="fp-item" onclick="openStats()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"></path></svg><span>数据总览</span></button>
       <button class="fp-item" onclick="clearAllFilter()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg><span>清空筛选</span></button>
     </div>
@@ -731,6 +738,11 @@ HTML_DOC = """<!DOCTYPE html>
   <div class="ap-head">
     <button class="back-btn" onclick="showHome()">← 返回首页</button>
     <span class="ap-title">求职准备清单</span>
+  </div>
+  <div class="ap-card" style="border:2px solid var(--ac,#2f6bff);background:linear-gradient(135deg,#eef4ff,#f7faff)">
+    <h3 style="margin-top:0">面试陪练 <span style="font-size:12px;color:var(--ac,#2f6bff);border:1px solid var(--ac,#2f6bff);border-radius:10px;padding:1px 8px;vertical-align:2px">情景模拟</span></h3>
+    <p style="font-size:14px;color:#555;line-height:1.8;margin:8px 0 12px">模拟真实面试：自我介绍、谈时间、谈工资，一步步陪你说到不紧张。说错了也没关系，不判对错，只陪你练。</p>
+    <button class="btn" style="width:100%" onclick="openIv()">开始练习</button>
   </div>
   <div class="ap-card">
     <h3>面试/入职要带什么</h3>
@@ -1277,6 +1289,14 @@ var PAGE_SIZE = 10;
 var FAVS = [];
 try { FAVS = JSON.parse(localStorage.getItem('xy_favs') || '[]'); } catch(e){ FAVS = []; }
 var favMode = false;
+var socFilter = false;
+function toggleSocFilter(){
+  socFilter = !socFilter;
+  var b = document.getElementById('fpSoc'); if(b) b.classList.toggle('on', socFilter);
+  shownMax = PAGE_SIZE;
+  ensureAll(function(){ render(); });
+  toast(socFilter ? '只看国企、央企、事业单位岗位' : '已显示全部岗位');
+}
 function saveFavs(){ try { localStorage.setItem('xy_favs', JSON.stringify(FAVS)); } catch(e){} document.getElementById('favCount').textContent = FAVS.length; }
 function isFav(cd){ return cd && FAVS.indexOf(cd) >= 0; }
 function toggleFav(cd){
@@ -1391,6 +1411,7 @@ function visible(j){
     for(var oi = 0; oi < selOcc.length; oi++){ if(oc.indexOf(selOcc[oi]) >= 0){ hit = true; break; } }
     if(!hit) return false;
   }
+  if(socFilter && j.ow !== '央企' && j.ow !== '国企' && j.ow !== '事业单位') return false;
   if(kw){
     if(kw.indexOf('心智') === 0){
       var want = kw.replace('心智', '');
@@ -1422,7 +1443,12 @@ function render(){
     var isOff = j.st==='expired' || (j.dl && fmtDeadline(j.dl)==='已截止');
     var card = document.createElement('div'); card.className = 'card' + (isOff?' expired':'');
     var dl = fmtDeadline(j.dl), pb = fmtTime(j.pb);
-    var badge = isOff ? '<span class="badge off">已失效</span>' : (isNewJob(j.pb) ? '<span class="badge new">新发布</span>' : '');
+    var socTag = '';
+    if(j.ow === '央企' || j.ow === '国企' || j.ow === '事业单位'){
+      var socCol = j.ow === '央企' ? '#1D4ED8' : (j.ow === '国企' ? '#2563EB' : '#0D9488');
+      socTag = '<span class="badge soc" style="background:'+socCol+'">'+j.ow+'</span>';
+    }
+    var badge = socTag + (isOff ? '<span class="badge off">已失效</span>' : (isNewJob(j.pb) ? '<span class="badge new">新发布</span>' : ''));
     if(!isOff && dl && dl.indexOf('天后截止')>=0) badge = badge + '<span class="badge hot">即将截止</span>';
     var mhTag = j.mh ? '<span class="badge mh">心智障碍可投</span>' : '';
     var favCls = isFav(j.cd) ? ' on' : '';
@@ -1620,9 +1646,10 @@ function toggleHisMode(){
 // ===== 清空全部筛选（面板按钮 + 筛选项"清空"共用） =====
 function clearAllFilter(){
   selMh = []; selOcc = []; selCities = []; kw = '';
-  recentOnly = false; hisMode = false;
+  recentOnly = false; hisMode = false; socFilter = false;
   var a = document.getElementById('fpRecent'); if(a) a.classList.remove('on');
   var b = document.getElementById('fpHis'); if(b) b.classList.remove('on');
+  var sc = document.getElementById('fpSoc'); if(sc) sc.classList.remove('on');
   document.getElementById('q').value = '';
   curLetter = '全部'; shownMax = PAGE_SIZE;
   renderCities(); renderFilters(); ensureAll(function(){ render(); });
@@ -1840,11 +1867,12 @@ function isNewJob(pb){
 // 渲染数据总览
 function renderStats(){
   ensureAll(function(){
-    var jobs = JOBS, total = jobs.length, valid = 0, mh = 0, cityCnt = {};
+    var jobs = JOBS, total = jobs.length, valid = 0, mh = 0, soc = 0, cityCnt = {};
     for(var i = 0; i < total; i++){
       var j = jobs[i];
       if(j.st !== 'expired') valid++;
       if(j.mh) mh++;
+      if(j.ow === '央企' || j.ow === '国企' || j.ow === '事业单位') soc++;
       var c = j.c || j.p || '其他';
       cityCnt[c] = (cityCnt[c] || 0) + 1;
     }
@@ -1853,6 +1881,7 @@ function renderStats(){
         '<div class="s"><b>' + total + '</b><span>岗位总数</span></div>'+
         '<div class="s"><b>' + Object.keys(cityCnt).length + '</b><span>覆盖城市</span></div>'+
         '<div class="s"><b>' + mh + '</b><span>心智可投</span></div>'+
+        '<div class="s"><b>' + soc + '</b><span>国企央企事业单位</span></div>'+
         '<div class="s"><b>' + colTotal + '</b><span>专栏文章</span></div>'+
       '</div>';
     var cityTop = Object.keys(cityCnt).map(function(k){ return [k, cityCnt[k]]; }).sort(function(a,b){ return b[1]-a[1]; }).slice(0,10);
