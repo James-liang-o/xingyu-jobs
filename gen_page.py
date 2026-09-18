@@ -776,7 +776,7 @@ HTML_DOC = """<!DOCTYPE html>
 
 <div class="detailpage" id="detailPage">
   <div class="ap-head">
-    <button class="back-btn" onclick="showHome()">← 返回</button>
+    <button class="back-btn" onclick="backFromDetail()">← 返回</button>
     <span class="ap-title">岗位详情</span>
   </div>
   <div class="dt-card">
@@ -1074,6 +1074,16 @@ function showZoneOf(){
   document.getElementById('colPage').style.display = 'none';
   showZone(COLDEF[colKey] ? COLDEF[colKey].grp : 'job');
 }
+function backFromDetail(){
+  document.getElementById('detailPage').style.display = 'none';
+  document.getElementById('colPage').style.display = 'none';
+  document.getElementById('aboutPage').style.display = 'none';
+  document.getElementById('verifyPage').style.display = 'none';
+  document.getElementById('statsPage').style.display = 'none';
+  document.getElementById('prePage').style.display = 'none';
+  renderColGrid();
+  try{ window.scrollTo(0, savedScrollY); }catch(e){}
+}
 function showHome(){
   document.getElementById('prePage').style.display = 'none';
   document.getElementById('statsPage').style.display = 'none';
@@ -1104,8 +1114,10 @@ function findJob(cd){
   for(var i = 0; i < JOBS.length; i++){ if(JOBS[i].cd === cd) return JOBS[i]; }
   return null;
 }
+var savedScrollY = 0;
 function showJob(cd){
   addHis(cd);
+  savedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
   var j = findJob(cd);
   if(!j){ ensureAll(function(){ showJob(cd); }); return; }
   document.getElementById('colPage').style.display = 'none';
