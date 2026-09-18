@@ -674,6 +674,7 @@ var COLDEF = {
   'doing':   {'ico':'行','tt':'他们正在做','sub':'各地机构与真实案例','grp':'job'},
   'company': {'ico':'企','tt':'企业故事','sub':'在行动的企业','grp':'com'},
   'emp': {'ico':'惠','tt':'企业用工政策','sub':'招用残疾人的税收优惠与补贴','grp':'com'},
+  'guide': {'ico':'册','tt':'企业用工指南','sub':'怎么招、怎么留：实操方法与成功案例','grp':'com'},
   'policy':  {'ico':'策','tt':'政策与普法','sub':'国家政策与法律知识','grp':'job'},
   'teach':   {'ico':'学','tt':'工作教学','sub':'实用技能与方法','grp':'job'},
   'activity':{'ico':'动','tt':'社会活动','sub':'可参与的非营利活动','grp':'job'},
@@ -1129,7 +1130,7 @@ render();
 """
 
 # 专栏数据：从 articles.json 动态构建（结构 {分类: [{t,s,o,d,u}]}）
-COLS_KEYS = ['social', 'doing', 'company', 'policy', 'teach', 'activity', 'resource', 'intl', 'support', 'emp']
+COLS_KEYS = ['social', 'doing', 'company', 'policy', 'teach', 'activity', 'resource', 'intl', 'support', 'emp', 'guide']
 cols_data = {}
 for key in COLS_KEYS:
     items = []
