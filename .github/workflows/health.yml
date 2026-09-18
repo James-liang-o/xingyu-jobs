@@ -1,0 +1,22 @@
+name: health-check
+on:
+  schedule:
+    # 每天 UTC 12:30（北京时间 20:30）体检一次——在当日岗位更新落地之后
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+  issues: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run health check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 health_check.py
