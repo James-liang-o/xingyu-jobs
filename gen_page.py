@@ -439,8 +439,9 @@ HTML_DOC = """<!DOCTYPE html>
     </ul>
   </div>
   <div class="ap-card">
-    <h3>如何投稿</h3>
-    <p>欢迎分享你的故事、经验或建议。请发送至邮箱 <span class="hl">1739528214@qq.com</span>，审核通过后会在专栏发布。本平台为纯公益信息导航，<strong>不收取任何费用</strong>。</p>
+    <h3>如何投稿与合作</h3>
+    <p><strong>投稿</strong>：欢迎分享你的故事、经验或建议，发送至邮箱 <span class="hl">1739528214@qq.com</span>，审核通过后会在专栏发布。</p>
+    <p><strong>合作</strong>：企业想发布助残岗位、公益组织想开展合作、媒体想了解更多，也请邮件联系 <span class="hl">1739528214@qq.com</span>（主题注明"合作"），我们会尽快回复。本平台为纯公益信息导航，<strong>不向求职者收取任何费用</strong>。</p>
   </div>
   <div class="ap-card">
     <h3>免责声明</h3>
@@ -453,7 +454,7 @@ HTML_DOC = """<!DOCTYPE html>
 
 <div class="site-footer">
   <div>© 2026 行隅 · 心智障碍就业导航 · 原创开发</div>
-  <div><a href="mailto:1739528214@qq.com?subject=行隅信息纠错%2F举报" class="fm">信息纠错 · 举报 ›</a>　<a href="#verify" class="fm">所有权验证 ›</a></div>
+  <div><a href="mailto:1739528214@qq.com?subject=行隅投稿" class="fm">投稿 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅合作" class="fm">合作 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅信息纠错%2F举报" class="fm">信息纠错 · 举报 ›</a>　<a href="#verify" class="fm">所有权验证 ›</a></div>
 </div>
 
 <div class="verifypage" id="verifyPage">
