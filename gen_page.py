@@ -239,6 +239,13 @@ HTML_DOC = """<!DOCTYPE html>
   .tb-title{font-size:16px;font-weight:700;line-height:1.35}
   .tb-sub{font-size:12px;opacity:.94;line-height:1.55;margin-top:3px}
   .tb-go{flex:0 0 auto;background:#fff;color:#0F766E;font-size:14px;font-weight:700;padding:10px 18px;border-radius:10px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+  /* 专栏三专区 */
+  .col-group{margin-bottom:16px}
+  .col-grp-tt{font-size:15px;font-weight:700;color:var(--ink);margin:4px 2px 2px}
+  .col-grp-sub{font-size:12px;color:var(--sub);margin:0 2px 8px}
+  .col-grp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .col-grp-cta{grid-column:1/-1;margin-top:4px;background:#F0FDF4;border:1px dashed #86EFAC;border-radius:10px;padding:10px 12px;font-size:13px;color:#065F46;text-align:center}
+  @media (max-width:640px){.col-grp-grid{grid-template-columns:repeat(2,1fr)}}
 
   /* 关于页（全屏覆盖层） */
   .aboutpage{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:30;overflow-y:auto;padding:0 16px 30px}
@@ -648,25 +655,47 @@ renderAds();
 // ===== 专栏（数据由 articles.json 生成） =====
 var COLS_DATA = __COLS_DATA__;
 var COLDEF = {
-  'social':  {'ico':'化','tt':'社会化专栏','sub':'帮助心智障碍者融入社会'},
-  'doing':   {'ico':'行','tt':'他们正在做','sub':'各地机构与真实案例'},
-  'company': {'ico':'企','tt':'企业故事','sub':'在行动的企业'},
-  'policy':  {'ico':'策','tt':'政策与普法','sub':'国家政策与法律知识'},
-  'teach':   {'ico':'学','tt':'工作教学','sub':'实用技能与方法'},
-  'activity':{'ico':'动','tt':'社会活动','sub':'可参与的非营利活动'},
-  'resource':{'ico':'寻','tt':'资源导航','sub':'去哪里找帮助'},
-  'intl':    {'ico':'际','tt':'国际视野','sub':'国际官方发布'}
+  'social':  {'ico':'化','tt':'社会化专栏','sub':'帮助心智障碍者融入社会','grp':'job'},
+  'doing':   {'ico':'行','tt':'他们正在做','sub':'各地机构与真实案例','grp':'guard'},
+  'company': {'ico':'企','tt':'企业故事','sub':'在行动的企业','grp':'com'},
+  'policy':  {'ico':'策','tt':'政策与普法','sub':'国家政策与法律知识','grp':'guard'},
+  'teach':   {'ico':'学','tt':'工作教学','sub':'实用技能与方法','grp':'job'},
+  'activity':{'ico':'动','tt':'社会活动','sub':'可参与的非营利活动','grp':'job'},
+  'resource':{'ico':'寻','tt':'资源导航','sub':'去哪里找帮助','grp':'guard'},
+  'intl':    {'ico':'际','tt':'国际视野','sub':'国际官方发布','grp':'guard'},
+  'support': {'ico':'助','tt':'支持与服务','sub':'教育·康复·生活·安置','grp':'guard'}
 };
 function colCount(key){ return (COLS_DATA[key]||[]).length; }
+// 专栏分三区：求职者专区 / 监护人专区 / 企业专区（各自定向，但都可看）
+var COL_GROUPS = [
+  ['job',   '求职者专区', '给心智障碍求职者自己看，内容简单直白'],
+  ['guard', '监护人专区', '家长与监护人看：康复·教育·政策·托养·维权'],
+  ['com',   '企业专区',   '企业与机构看：助残岗位、公益合作与用工政策']
+];
+function colCard(key){
+  var def = COLDEF[key], cnt = colCount(key);
+  var d = document.createElement('div');
+  d.className = 'col-big';
+  d.innerHTML = '<div class="ico">'+def.ico+'</div><div class="tt">'+def.tt+'</div><div class="sub">'+def.sub+'</div><div class="cnt">'+cnt+' 篇内容</div><div class="go">进入专栏 ›</div>';
+  d.addEventListener('click', function(){ showCol(key); });
+  return d;
+}
 function renderColGrid(){
   var el = document.getElementById('colGrid'); el.innerHTML = '';
-  Object.keys(COLDEF).forEach(function(key){
-    var def = COLDEF[key], cnt = colCount(key);
-    var d = document.createElement('div');
-    d.className = 'col-big';
-    d.innerHTML = '<div class="ico">'+def.ico+'</div><div class="tt">'+def.tt+'</div><div class="sub">'+def.sub+'</div><div class="cnt">'+cnt+' 篇内容</div><div class="go">进入专栏 ›</div>';
-    d.addEventListener('click', function(){ showCol(key); });
-    el.appendChild(d);
+  COL_GROUPS.forEach(function(g){
+    var keys = Object.keys(COLDEF).filter(function(k){ return COLDEF[k].grp === g[0]; });
+    if(!keys.length) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'col-group';
+    wrap.innerHTML = '<div class="col-grp-tt">'+g[1]+'</div><div class="col-grp-sub">'+g[2]+'</div><div class="col-grp-grid"></div>';
+    keys.forEach(function(k){ wrap.querySelector('.col-grp-grid').appendChild(colCard(k)); });
+    if(g[0] === 'com'){
+      var cta = document.createElement('div');
+      cta.className = 'col-grp-cta';
+      cta.innerHTML = '企业想发布助残岗位、开展公益合作？<a class="fm" href="mailto:1739528214@qq.com?subject=行隅合作">邮件联系 ›</a>';
+      wrap.querySelector('.col-grp-grid').appendChild(cta);
+    }
+    el.appendChild(wrap);
   });
 }
 var colKey = '';
@@ -995,7 +1024,7 @@ render();
 """
 
 # 专栏数据：从 articles.json 动态构建（结构 {分类: [{t,s,o,d,u}]}）
-COLS_KEYS = ['social', 'doing', 'company', 'policy', 'teach', 'activity', 'resource', 'intl']
+COLS_KEYS = ['social', 'doing', 'company', 'policy', 'teach', 'activity', 'resource', 'intl', 'support']
 cols_data = {}
 for key in COLS_KEYS:
     items = []
