@@ -342,6 +342,7 @@ HTML_DOC = """<!DOCTYPE html>
   .cols-title h2{font-size:19px;font-weight:800;margin:0}
   .cols-title span{font-size:12px;color:var(--sub)}
   .col-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 16px}
+  .col-grid > *{grid-column:1/-1}
   .col-grid .col-big{background:var(--card);border-radius:14px;padding:14px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;text-align:center;border:1px solid var(--line);transition:transform .12s,box-shadow .12s;display:flex;flex-direction:column;align-items:center;gap:6px}
   .col-grid .col-big:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(79,70,229,.14)}
   .col-grid .col-big .ico{width:40px;height:40px;border-radius:12px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px}
@@ -665,23 +666,23 @@ renderAds();
 var COLS_DATA = __COLS_DATA__;
 var COLDEF = {
   'social':  {'ico':'化','tt':'社会化专栏','sub':'帮助心智障碍者融入社会','grp':'job'},
-  'doing':   {'ico':'行','tt':'他们正在做','sub':'各地机构与真实案例','grp':'guard'},
+  'doing':   {'ico':'行','tt':'他们正在做','sub':'各地机构与真实案例','grp':'job'},
   'company': {'ico':'企','tt':'企业故事','sub':'在行动的企业','grp':'com'},
-  'policy':  {'ico':'策','tt':'政策与普法','sub':'国家政策与法律知识','grp':'guard'},
+  'emp': {'ico':'惠','tt':'企业用工政策','sub':'招用残疾人的税收优惠与补贴','grp':'com'},
+  'policy':  {'ico':'策','tt':'政策与普法','sub':'国家政策与法律知识','grp':'job'},
   'teach':   {'ico':'学','tt':'工作教学','sub':'实用技能与方法','grp':'job'},
   'activity':{'ico':'动','tt':'社会活动','sub':'可参与的非营利活动','grp':'job'},
-  'resource':{'ico':'寻','tt':'资源导航','sub':'去哪里找帮助','grp':'guard'},
-  'intl':    {'ico':'际','tt':'国际视野','sub':'国际官方发布','grp':'guard'},
-  'support': {'ico':'助','tt':'支持与服务','sub':'教育·康复·生活·安置','grp':'guard'}
+  'resource':{'ico':'寻','tt':'资源导航','sub':'去哪里找帮助','grp':'job'},
+  'intl':    {'ico':'际','tt':'国际视野','sub':'国际官方发布','grp':'job'},
+  'support': {'ico':'助','tt':'支持与服务','sub':'教育·康复·生活·安置','grp':'job'}
 };
 function colCount(key){ return (COLS_DATA[key]||[]).length; }
 // 专栏三区：先显示三个大区，点进区后再显示区内专栏
 var COL_GROUPS = [
-  ['job',   '求职者专区', '给心智障碍求职者自己看，内容简单直白'],
-  ['guard', '监护人专区', '家长与监护人看：康复·教育·政策·托养·维权'],
+  ['job',   '求职者专区', '求职者自己看：故事·教学·政策·支持与服务（家长也可参考）'],
   ['com',   '企业专区',   '企业与机构看：助残岗位、公益合作与用工政策']
 ];
-var ZONE_ICO = {'job':'人','guard':'护','com':'企'};
+var ZONE_ICO = {'job':'人','com':'企'};
 var curZone = '';
 function colCard(key){
   var def = COLDEF[key], cnt = colCount(key);
@@ -1065,7 +1066,7 @@ render();
 """
 
 # 专栏数据：从 articles.json 动态构建（结构 {分类: [{t,s,o,d,u}]}）
-COLS_KEYS = ['social', 'doing', 'company', 'policy', 'teach', 'activity', 'resource', 'intl', 'support']
+COLS_KEYS = ['social', 'doing', 'company', 'policy', 'teach', 'activity', 'resource', 'intl', 'support', 'emp']
 cols_data = {}
 for key in COLS_KEYS:
     items = []
