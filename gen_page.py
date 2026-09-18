@@ -976,7 +976,7 @@ var shownMax = PAGE_SIZE;
 
 // ===== 岗位标签：心智等级 + 职业词 =====
 function mhRange(j){
-  if(!j.mh || !j.ds) return '';
+  if(!j.ds) return '';
   var set = [];
   j.ds.split(';').forEach(function(p){
     if(/智力|精神|多重/.test(p)){
@@ -991,11 +991,24 @@ function mhRange(j){
   var lo = Math.min.apply(null, set), hi = Math.max.apply(null, set);
   return lo === hi ? (lo + '级') : (lo + '-' + hi + '级');
 }
-var OC_WORDS = ['普工','操作工','组装','装配','包装','搬运','装卸','保洁','保安','仓管','库管','客服','文员','会计','出纳','厨师','帮厨','洗碗','服务员','收银','理货','司机','质检','检验','销售','电工','焊工','维修','饲养','种植','护理','后勤','面点','烘焙','缝纫','裁剪'];
+var OC_WORDS = ['普工','操作工','组装','装配','包装','搬运','装卸','保洁','保安','门卫','仓管','库管','快递','物流','配送','分拣','客服','文员','前台','接待','助理','会计','出纳','厨师','帮厨','洗碗','传菜','服务员','收银','理货','导购','营业员','店员','促销','司机','质检','检验','电工','焊工','维修','饲养','种植','园艺','绿化','护理','护工','家政','后勤','面点','烘焙','缝纫','裁剪','美发','按摩','足疗','社工','志愿者','数据标注','标注','软件','开发','测试','运营','编辑','设计','教师','保育','助教','销售','业务','主播','直播','经纪人','饲养员','养殖','餐饮','勤杂','洗车','印刷','装订','模具','数控','车床','钳工','铣工','喷漆','电镀','监理','质量','食品加工','生产工','技术员','工程师','仓库','仓储','物业','值班','巡逻','理货员','外卖','骑手','服务员'];
+var OC_SKIP = ['不限','其他','无','以上','以下','相关','专业','岗位','工作','人员','管理','技术','类','职位','全职','兼职','处理'];
 function occTags(j){
-  if(!j.dy) return [];
+  var t = (j.n || '') + '|' + (j.dy || '');
   var out = [];
-  OC_WORDS.forEach(function(w){ if(out.length < 3 && j.dy.indexOf(w) >= 0) out.push(w); });
+  OC_WORDS.forEach(function(w){ if(out.length < 3 && t.indexOf(w) >= 0) out.push(w); });
+  if(out.length < 2 && j.dy){
+    // 兜底：从行业分类末段（最具体的岗位名）拆词
+    var seg = (j.dy.split('|').pop() || '').trim();
+    seg.split(/[\/／、,，]/).forEach(function(w){
+      if(out.length >= 2) return;
+      w = w.trim().replace(/[员工师岗生技人]$/,'');
+      if(w.length >= 2 && w.length <= 6 && OC_SKIP.indexOf(w) < 0){
+        var dup = out.some(function(o){ return o.indexOf(w) >= 0 || w.indexOf(o) >= 0; });
+        if(!dup) out.push(w);
+      }
+    });
+  }
   return out;
 }
 function jobTagsHtml(j){
