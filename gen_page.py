@@ -219,6 +219,12 @@ HTML_DOC = """<!DOCTYPE html>
   .fp-item svg{width:22px;height:22px;stroke:var(--primary)}
   .fp-item.on svg{stroke:var(--primary)}
   .fp-close{margin-top:14px;width:100%;padding:11px;border:1px solid var(--line);background:none;border-radius:10px;font-size:14px;color:var(--sub);cursor:pointer}
+  .iv-say{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:10px;font-size:15px;line-height:1.6}
+  .iv-say b{color:var(--primary)}
+  .iv-opt{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin:7px 0;font-size:15px;line-height:1.5;color:var(--text);cursor:pointer}
+  .iv-opt:active{background:var(--bg)}
+  .iv-fb{margin-top:11px;padding:11px 13px;border-radius:12px;background:rgba(13,148,136,.08);border:1px solid rgba(13,148,136,.28);font-size:14px;line-height:1.7;color:var(--text)}
+  .iv-fb b{color:var(--primary)}
   /* 设置面板（齿轮弹出） */
   .setmask{position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px}
   .setbox{background:var(--card);border-radius:14px;padding:18px;width:100%;max-width:340px}
@@ -564,6 +570,7 @@ HTML_DOC = """<!DOCTYPE html>
       <button class="fp-item" id="fpFav" onclick="toggleFavMode()"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"></path></svg><span>我的收藏</span></button>
       <button class="fp-item" onclick="printList()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg><span>打印清单</span></button>
       <button class="fp-item" onclick="showPrep()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h6M9 12h6M9 18h6"></path><path d="M5 3h14a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"></path></svg><span>求职准备</span></button>
+      <button class="fp-item" onclick="openIv()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg><span>面试陪练</span></button>
       <button class="fp-item" onclick="openStats()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"></path></svg><span>数据总览</span></button>
       <button class="fp-item" onclick="clearAllFilter()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg><span>清空筛选</span></button>
     </div>
@@ -703,6 +710,20 @@ HTML_DOC = """<!DOCTYPE html>
       <button class="btn" id="gNext" onclick="guideNext()" style="margin-left:auto">下一步</button>
     </div>
     <div class="close-share" style="text-align:center" onclick="closeGuide()">关闭</div>
+  </div>
+</div>
+
+<div class="sharemask" id="ivMask" onclick="if(event.target===this)closeIv()">
+  <div class="sharebox" style="max-width:480px;text-align:left">
+    <h3 style="text-align:center">面试陪练</h3>
+    <div id="ivProg" style="text-align:center;font-size:12px;color:var(--sub);margin-bottom:8px"></div>
+    <div id="ivBox" style="font-size:15px;color:var(--text);min-height:150px"></div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:14px">
+      <button class="btn ghost" id="ivPrevBtn" onclick="ivPrev()" style="display:none">上一步</button>
+      <button class="btn" id="ivReadBtn" onclick="ivRead()" style="margin-left:auto">朗读</button>
+      <button class="btn" id="ivNextBtn" onclick="ivNext()" style="display:none">下一步</button>
+    </div>
+    <div class="close-share" style="text-align:center" onclick="closeIv()">关闭</div>
   </div>
 </div>
 
@@ -1667,6 +1688,98 @@ function applyGuide(){
   renderCities(); renderFilters();
   ensureAll(function(){ render(); });
   toast(gCity ? '已按「' + gCity + '」为你筛选岗位，可在顶部继续调整' : '已为你筛选岗位，可在顶部继续调整');
+}
+
+
+// ===== 面试陪练：情景模拟（不判对错，只给鼓励式示范） =====
+var IV_STEPS = [
+  {say:'你好，请坐。先简单介绍一下自己吧。', opts:[
+    ['您好，我叫××，很高兴来面试。','很好！先问好再说自己的名字，面试官一下就能记住你。'],
+    ['（紧张得说不出话）','没关系，紧张很正常，多练几次就好了。可以试着说：“您好，我叫××，很高兴来面试。”'],
+    ['你好。','很好！还可以多说一句：“您好，我叫××，很高兴来面试。”这样更完整。']
+  ]},
+  {say:'你能介绍一下自己吗？以前做过什么工作？', opts:[
+    ['我叫××，以前做过包装工，能坐班。','说得真清楚！名字、做过什么、能不能坐班，都是面试官最想听的。'],
+    ['我……不知道说什么。','没关系。提前准备一句话就行：“我叫××，以前做过包装工，能坐班。”在家多念几遍，就不紧张了。'],
+    ['我什么都能干。','可以再说得具体一点，比如：“我做过包装工，动作快，能坐班。”说得具体，面试官更容易听懂。']
+  ]},
+  {say:'你能每周工作几天？可以加班吗？', opts:[
+    ['可以，我周一到周五都能来。','很好！把时间说清楚，面试官就好安排。'],
+    ['我要问一下我妈妈。','可以，拿不准的事问家里很正常。可以这样说：“我想先跟家里人商量一下，明天答复您。”'],
+    ['随便。','试试把时间说清楚：“我周一到周五都能来。”这样面试官就知道你的时间了。']
+  ]},
+  {say:'你对工资有什么要求吗？', opts:[
+    ['按公司规定来就行。','可以！如果心里有数，也可以说：“希望不低于××元。”'],
+    ['我要先问问家里。','很好，可以说：“我想先问一下家人，明天答复您。”拿不准就问，很稳妥。'],
+    ['越多越好。','大家都想多挣，但面试的时候这样说更好：“按公司规定来就行。”或者“希望不低于××元。”']
+  ]},
+  {say:'好的，我们了解了。你先回去，等通知吧。', opts:[
+    ['好的，谢谢您！那我先走了，再见。','很有礼貌！面试结束说谢谢，印象加分。'],
+    ['（什么都不说就走）','记得说：“谢谢您，再见。”礼貌的话，面试官会记住你。'],
+    ['大概什么时候有消息？','可以问！说：“请问大概什么时候有结果？”问清楚时间，心里踏实。']
+  ]}
+];
+var ivStep = 0, ivPicked = null;
+function openIv(){
+  ivStep = 0; ivPicked = null;
+  closeFp();
+  ivRender();
+  document.getElementById('ivMask').style.display = 'flex';
+}
+function closeIv(){
+  try{ speechSynthesis.cancel(); }catch(e){}
+  document.getElementById('ivMask').style.display = 'none';
+}
+function ivRender(){
+  var box = document.getElementById('ivBox');
+  var prog = document.getElementById('ivProg');
+  var pb = document.getElementById('ivPrevBtn');
+  var nb = document.getElementById('ivNextBtn');
+  if(ivStep >= IV_STEPS.length){
+    prog.textContent = '练完啦';
+    pb.style.display = 'none';
+    nb.style.display = 'none';
+    box.innerHTML = '<div class="iv-fb" style="font-size:15px;line-height:1.9"><b>练完啦，你真棒！</b><br>面试前可以再练几遍，也可以让家人陪着你一起练。<br>记住：说清楚名字、做过什么、能做多久，就是最棒的自我介绍。<br>紧张的时候深呼吸，慢慢说，没关系的。</div><button class="btn" style="margin-top:14px;width:100%" onclick="openIv()">再练一遍</button>';
+    return;
+  }
+  prog.textContent = '第 ' + (ivStep + 1) + ' 步 / 共 ' + IV_STEPS.length + ' 步';
+  pb.style.display = ivStep > 0 ? '' : 'none';
+  nb.style.display = ivPicked !== null ? '' : 'none';
+  var st = IV_STEPS[ivStep];
+  var h = '<div class="iv-say"><b>面试官：</b>' + esc(st.say) + '</div>';
+  for(var i = 0; i < st.opts.length; i++){
+    var sel = (ivPicked === i) ? ' style="border-color:var(--primary);background:rgba(13,148,136,.07)"' : '';
+    h += '<button class="iv-opt"' + sel + ' onclick="ivPick(' + i + ')">' + esc(st.opts[i][0]) + '</button>';
+  }
+  if(ivPicked !== null){
+    h += '<div class="iv-fb"><b>陪练这样说：</b>' + esc(st.opts[ivPicked][1]) + '</div>';
+  }
+  box.innerHTML = h;
+}
+function ivPick(i){
+  ivPicked = i;
+  ivRender();
+  try{ speechSynthesis.cancel(); }catch(e){}
+  toast('选好啦，看看陪练怎么回应');
+}
+function ivNext(){
+  if(ivStep < IV_STEPS.length){ ivStep++; ivPicked = null; ivRender(); }
+  else { closeIv(); }
+}
+function ivPrev(){
+  if(ivStep > 0){ ivStep--; ivPicked = null; ivRender(); }
+}
+function ivRead(){
+  if(ivStep >= IV_STEPS.length){ toast('练习完成，再来一遍吧'); return; }
+  if(!('speechSynthesis' in window)){ toast('当前浏览器不支持朗读'); return; }
+  var st = IV_STEPS[ivStep];
+  var lines = ['面试官说：' + st.say];
+  for(var i = 0; i < st.opts.length; i++){ lines.push('可以这样说：' + st.opts[i][0]); }
+  var msg = new SpeechSynthesisUtterance(lines.join('。'));
+  msg.lang = 'zh-CN'; msg.rate = 0.95;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(msg);
+  toast('正在朗读：面试官的话和回应示范');
 }
 
 // ===== 打印 / 保存岗位清单 =====
