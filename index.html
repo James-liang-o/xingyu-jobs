@@ -90,10 +90,19 @@
   .tb-title{font-size:16px;font-weight:700;line-height:1.35}
   .tb-sub{font-size:12px;opacity:.94;line-height:1.55;margin-top:3px}
   .tb-go{flex:0 0 auto;background:#fff;color:#0F766E;font-size:14px;font-weight:700;padding:10px 18px;border-radius:10px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.12)}
-  /* 专栏三专区 */
-  .col-group{margin-bottom:16px}
-  .col-grp-tt{font-size:15px;font-weight:700;color:var(--ink);margin:4px 2px 2px}
-  .col-grp-sub{font-size:12px;color:var(--sub);margin:0 2px 8px}
+  /* 专栏先大后小：三大专区卡片 */
+  .zone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .zone-big{background:linear-gradient(160deg,#FFFFFF,#F0F7FF);border:1px solid #D6E6F8;border-radius:16px;padding:18px 14px;text-align:center;cursor:pointer;transition:box-shadow .15s}
+  .zone-big:hover{box-shadow:0 3px 12px rgba(37,99,235,.14)}
+  .zone-ico{width:44px;height:44px;margin:0 auto 8px;border-radius:12px;background:linear-gradient(135deg,#2563EB,#3B82F6);color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .zone-tt{font-size:16px;font-weight:700;color:var(--ink)}
+  .zone-sub{font-size:12px;color:var(--sub);margin:4px 0 8px;line-height:1.5}
+  .zone-cnt{font-size:12px;color:#2563EB;font-weight:600}
+  .zone-go{display:inline-block;margin-top:8px;font-size:13px;font-weight:600;color:#fff;background:#2563EB;border-radius:8px;padding:4px 16px}
+  .zone-head{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+  .zone-head .zone-head-tt{font-size:15px;font-weight:700;color:var(--ink)}
+  @media (max-width:640px){.zone-grid{grid-template-columns:1fr}}
+  /* 专区内专栏网格 */
   .col-grp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .col-grp-cta{grid-column:1/-1;margin-top:4px;background:#F0FDF4;border:1px dashed #86EFAC;border-radius:10px;padding:10px 12px;font-size:13px;color:#065F46;text-align:center}
   @media (max-width:640px){.col-grp-grid{grid-template-columns:repeat(2,1fr)}}
@@ -249,7 +258,7 @@
 <div class="col-grid" id="colGrid"></div>
 <div class="colpage" id="colPage" style="display:none">
   <div class="colp-head">
-    <button class="back-btn" onclick="showHome()">← 返回首页</button>
+    <button class="back-btn" onclick="showZoneOf()">← 返回</button>
     <span class="colp-ico" id="colPIco">化</span>
     <span class="colp-tt" id="colPTt">专栏</span>
     <span class="colp-sub" id="colPSub"></span>
@@ -517,12 +526,14 @@ var COLDEF = {
   'support': {'ico':'助','tt':'支持与服务','sub':'教育·康复·生活·安置','grp':'guard'}
 };
 function colCount(key){ return (COLS_DATA[key]||[]).length; }
-// 专栏分三区：求职者专区 / 监护人专区 / 企业专区（各自定向，但都可看）
+// 专栏三区：先显示三个大区，点进区后再显示区内专栏
 var COL_GROUPS = [
   ['job',   '求职者专区', '给心智障碍求职者自己看，内容简单直白'],
   ['guard', '监护人专区', '家长与监护人看：康复·教育·政策·托养·维权'],
   ['com',   '企业专区',   '企业与机构看：助残岗位、公益合作与用工政策']
 ];
+var ZONE_ICO = {'job':'人','guard':'护','com':'企'};
+var curZone = '';
 function colCard(key){
   var def = COLDEF[key], cnt = colCount(key);
   var d = document.createElement('div');
@@ -531,23 +542,48 @@ function colCard(key){
   d.addEventListener('click', function(){ showCol(key); });
   return d;
 }
+function zoneCard(grp){
+  var g = null;
+  COL_GROUPS.forEach(function(x){ if(x[0] === grp) g = x; });
+  var keys = Object.keys(COLDEF).filter(function(k){ return COLDEF[k].grp === grp; });
+  var cnt = 0;
+  keys.forEach(function(k){ cnt += colCount(k); });
+  var d = document.createElement('div');
+  d.className = 'zone-big';
+  d.innerHTML = '<div class="zone-ico">'+ZONE_ICO[grp]+'</div><div class="zone-tt">'+g[1]+'</div><div class="zone-sub">'+g[2]+'</div><div class="zone-cnt">'+keys.length+' 个专栏 · '+cnt+' 篇内容</div><div class="zone-go">进入 ›</div>';
+  d.addEventListener('click', function(){ showZone(grp); });
+  return d;
+}
+function showZone(grp){
+  curZone = grp;
+  var g = null;
+  COL_GROUPS.forEach(function(x){ if(x[0] === grp) g = x; });
+  var keys = Object.keys(COLDEF).filter(function(k){ return COLDEF[k].grp === grp; });
+  var el = document.getElementById('colGrid');
+  el.innerHTML = '';
+  var head = document.createElement('div');
+  head.className = 'zone-head';
+  head.innerHTML = '<button class="back-btn" onclick="renderColGrid()">← 返回分区</button><span class="zone-head-tt">'+g[1]+'</span>';
+  el.appendChild(head);
+  var grid = document.createElement('div');
+  grid.className = 'col-grp-grid';
+  keys.forEach(function(k){ grid.appendChild(colCard(k)); });
+  if(grp === 'com'){
+    var cta = document.createElement('div');
+    cta.className = 'col-grp-cta';
+    cta.innerHTML = '企业想发布助残岗位、开展公益合作？<a class="fm" href="mailto:1739528214@qq.com?subject=行隅合作">邮件联系 ›</a>';
+    grid.appendChild(cta);
+  }
+  el.appendChild(grid);
+  window.scrollTo(0, 0);
+}
 function renderColGrid(){
+  curZone = '';
   var el = document.getElementById('colGrid'); el.innerHTML = '';
-  COL_GROUPS.forEach(function(g){
-    var keys = Object.keys(COLDEF).filter(function(k){ return COLDEF[k].grp === g[0]; });
-    if(!keys.length) return;
-    var wrap = document.createElement('div');
-    wrap.className = 'col-group';
-    wrap.innerHTML = '<div class="col-grp-tt">'+g[1]+'</div><div class="col-grp-sub">'+g[2]+'</div><div class="col-grp-grid"></div>';
-    keys.forEach(function(k){ wrap.querySelector('.col-grp-grid').appendChild(colCard(k)); });
-    if(g[0] === 'com'){
-      var cta = document.createElement('div');
-      cta.className = 'col-grp-cta';
-      cta.innerHTML = '企业想发布助残岗位、开展公益合作？<a class="fm" href="mailto:1739528214@qq.com?subject=行隅合作">邮件联系 ›</a>';
-      wrap.querySelector('.col-grp-grid').appendChild(cta);
-    }
-    el.appendChild(wrap);
-  });
+  var wrap = document.createElement('div');
+  wrap.className = 'zone-grid';
+  COL_GROUPS.forEach(function(g){ wrap.appendChild(zoneCard(g[0])); });
+  el.appendChild(wrap);
 }
 var colKey = '';
 var colShown = 0;
@@ -612,11 +648,16 @@ document.getElementById('colPage').addEventListener('click', function(e){
     t = t.parentNode;
   }
 });
+function showZoneOf(){
+  document.getElementById('colPage').style.display = 'none';
+  showZone(COLDEF[colKey] ? COLDEF[colKey].grp : 'job');
+}
 function showHome(){
   document.getElementById('colPage').style.display = 'none';
   document.getElementById('aboutPage').style.display = 'none';
   document.getElementById('verifyPage').style.display = 'none';
   document.getElementById('detailPage').style.display = 'none';
+  renderColGrid();
 }
 function showAbout(){
   document.getElementById('colPage').style.display = 'none';
