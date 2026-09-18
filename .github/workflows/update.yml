@@ -1,8 +1,8 @@
 name: update-jobs
 on:
   schedule:
-    # 半周更新一次：UTC 周三、周日 10:15（北京时间 18:15）
-    - cron: '15 10 * * 0,3'
+    # 岗位每天更新一次：UTC 每天 10:15（北京时间 18:15），失效岗位自动标记保留
+    - cron: '15 10 * * *'
   workflow_dispatch:
 jobs:
   build:
