@@ -136,7 +136,7 @@ for r in rows:
     })
 # 分片：岗位数据按每片 600 条拆成独立 js 文件，页面按需加载；首片内嵌 HTML 保证首屏秒开
 # chunk 文件用回调函数交付数据（window.__chunkCb(idx, data)），避免依赖 script onload 时序
-CHUNK_SIZE = 600
+CHUNK_SIZE = 300
 chunks = [js_rows[i:i+CHUNK_SIZE] for i in range(0, len(js_rows), CHUNK_SIZE)]
 for ci, ck in enumerate(chunks):
     with open(os.path.join(BASE, 'jobs_chunk_%d.js' % ci), 'w', encoding='utf-8') as f:
