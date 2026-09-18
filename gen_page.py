@@ -212,6 +212,11 @@ HTML_DOC = """<!DOCTYPE html>
   .card .info{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:12px;color:var(--sub)}
   .card .info .i{display:flex;align-items:center;gap:3px}
   .card .duty{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.5}
+  .card .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .card .tag{font-size:11px;color:#2563EB;background:#EFF6FF;border:1px solid #DBEAFE;border-radius:999px;padding:2px 10px;cursor:pointer;line-height:1.7;transition:background .12s}
+  .card .tag:hover{background:#DBEAFE}
+  .card .tag.mh-tag{color:#065F46;background:#ECFDF5;border-color:#A7F3D0}
+  .card .tag.mh-tag:hover{background:#A7F3D0}
   .card .foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
   .card .time{font-size:11px;color:var(--sub)}
   .card .time .dl{color:var(--warn)}
@@ -485,7 +490,7 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 
 <div class="site-footer">
-  <div>© 2026 行隅 · 心智障碍就业导航 · 原创开发 <span class="ver">v2.15</span> · <a href="#about" class="fm">原创项目 · 盗用追责</a></div>
+  <div>© 2026 行隅 · 心智障碍就业导航 · 原创开发 <span class="ver">v2.17</span> · <a href="#about" class="fm">原创项目 · 盗用追责</a></div>
   <div><a href="mailto:1739528214@qq.com?subject=行隅投稿" class="fm">投稿 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅合作" class="fm">合作 ›</a>　<a href="mailto:1739528214@qq.com?subject=行隅信息纠错%2F举报" class="fm">信息纠错 · 举报 ›</a>　<a href="#verify" class="fm">所有权验证 ›</a></div>
 </div>
 
@@ -969,6 +974,37 @@ function toggleFavMode(){ favMode = !favMode; document.getElementById('favToggle
 saveFavs();
 var shownMax = PAGE_SIZE;
 
+// ===== 岗位标签：心智等级 + 职业词 =====
+function mhRange(j){
+  if(!j.mh || !j.ds) return '';
+  var set = [];
+  j.ds.split(';').forEach(function(p){
+    if(/智力|精神|多重/.test(p)){
+      var mm = p.match(/(\d+)\s*[-–,，]\s*(\d+)/) || p.match(/(\d+)/);
+      if(mm){
+        var a = +mm[1], b = mm[2] ? +mm[2] : a;
+        for(var x = a; x <= b; x++){ if(set.indexOf(x) < 0) set.push(x); }
+      }
+    }
+  });
+  if(!set.length) return '';
+  var lo = Math.min.apply(null, set), hi = Math.max.apply(null, set);
+  return lo === hi ? (lo + '级') : (lo + '-' + hi + '级');
+}
+var OC_WORDS = ['普工','操作工','组装','装配','包装','搬运','装卸','保洁','保安','仓管','库管','客服','文员','会计','出纳','厨师','帮厨','洗碗','服务员','收银','理货','司机','质检','检验','销售','电工','焊工','维修','饲养','种植','护理','后勤','面点','烘焙','缝纫','裁剪'];
+function occTags(j){
+  if(!j.dy) return [];
+  var out = [];
+  OC_WORDS.forEach(function(w){ if(out.length < 3 && j.dy.indexOf(w) >= 0) out.push(w); });
+  return out;
+}
+function jobTagsHtml(j){
+  var h = '';
+  var mh = mhRange(j);
+  if(mh) h += '<span class="tag mh-tag" data-k="心智'+mh+'">心智障碍·'+mh+'可投</span>';
+  occTags(j).forEach(function(w){ h += '<span class="tag" data-k="'+w+'">'+w+'</span>'; });
+  return h;
+}
 function render(){
   var el = document.getElementById('list'); el.innerHTML = '';
   var shown = 0, total = 0;
@@ -982,8 +1018,13 @@ function render(){
       if(!c || c.letter!==curLetter) return;
     }
     if(kw){
-      var s = (j.n+j.o+j.c+j.s).toLowerCase();
-      if(s.indexOf(kw.toLowerCase())<0) return;
+      if(kw.indexOf('心智') === 0){
+        var want = kw.replace('心智', '');
+        if(mhRange(j) !== want) return;
+      } else {
+        var s = (j.n+j.o+j.c+j.s+j.ds+j.dy).toLowerCase();
+        if(s.indexOf(kw.toLowerCase()) < 0) return;
+      }
     }
     total++;
     if(shown >= shownMax) return;
@@ -1008,6 +1049,7 @@ function render(){
         (j.t?'<span class="i">'+typ+'</span>':'')+
       '</div>'+
       (j.dy?'<div class="duty">'+dy+'</div>':'')+
+      '<div class="tags">'+jobTagsHtml(j)+'</div>'+
       '<div class="foot"><div class="time">'+pb+(dl?' · <span class="dl">'+dl+'</span>':'')+'</div>'+
       '<div class="btns">'+
         '<button class="btn ghost" data-cd="'+esc(j.cd)+'">查看详情</button>'+
@@ -1022,10 +1064,18 @@ function render(){
   else { mw.style.display = 'none'; }
 }
 
-// 事件委托：卡片"查看详情"打开站内详情页
+// 事件委托：卡片"查看详情"打开站内详情页；点标签直接搜索
 document.getElementById('list').addEventListener('click', function(e){
   var t = e.target;
   while(t && t !== this){
+    if(t.classList && t.classList.contains('tag')){
+      var k = t.getAttribute('data-k');
+      document.getElementById('q').value = k;
+      kw = k;
+      curLetter = '全部'; curCity = '全部'; shownMax = PAGE_SIZE; renderCities();
+      ensureAll(function(){ render(); });
+      return;
+    }
     if(t.classList && t.classList.contains('btn') && t.classList.contains('ghost')){
       showJob(t.getAttribute('data-cd'));
       return;
