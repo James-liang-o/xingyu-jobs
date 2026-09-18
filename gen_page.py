@@ -331,7 +331,10 @@ HTML_DOC = """<!DOCTYPE html>
   .colp-head .colp-ico{width:30px;height:30px;border-radius:9px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
   .colp-head .colp-tt{font-size:16px;font-weight:800}
   .colp-head .colp-sub{font-size:11px;color:var(--sub);margin-left:auto}
-  .colp-list{padding:12px 16px 40px;display:flex;flex-direction:column;gap:10px}
+  .colp-list{padding:12px 16px 0;display:flex;flex-direction:column;gap:10px}
+  .colp-more{padding:16px;text-align:center}
+  .colp-more-btn{width:100%;max-width:280px;padding:12px;border:none;border-radius:10px;background:var(--primary);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+  .colp-more-cnt{font-size:12px;color:var(--sub);margin-top:8px}
   .colp-item{display:block;background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-decoration:none;color:inherit;border:1px solid var(--line)}
   .colp-item .t{font-size:15px;font-weight:700;color:var(--text);line-height:1.5}
   .colp-item .s{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.7}
@@ -377,6 +380,10 @@ HTML_DOC = """<!DOCTYPE html>
     <span class="colp-sub" id="colPSub"></span>
   </div>
   <div class="colp-list" id="colPList"></div>
+  <div class="colp-more" id="colMoreWrap" style="display:none">
+    <button class="colp-more-btn" id="colMoreBtn">加载更多</button>
+    <div class="colp-more-cnt" id="colMoreCnt"></div>
+  </div>
 </div>
 <div class="citytoggle" id="cityToggle"><span class="ct">城市筛选 <span class="arrow">▼</span></span><span class="ctstate" id="cityState">展开</span></div>
 <div class="cityzone" id="cityZone">
@@ -589,7 +596,9 @@ var COLDEF = {
   'company': {'ico':'企','tt':'企业故事','sub':'在行动的企业'},
   'policy':  {'ico':'策','tt':'政策与普法','sub':'国家政策与法律知识'},
   'teach':   {'ico':'学','tt':'工作教学','sub':'实用技能与方法'},
-  'activity':{'ico':'动','tt':'社会活动','sub':'可参与的非营利活动'}
+  'activity':{'ico':'动','tt':'社会活动','sub':'可参与的非营利活动'},
+  'resource':{'ico':'寻','tt':'资源导航','sub':'去哪里找帮助'},
+  'intl':    {'ico':'际','tt':'国际视野','sub':'国际官方发布'}
 };
 function colCount(key){ return (COLS_DATA[key]||[]).length; }
 function renderColGrid(){
@@ -603,29 +612,56 @@ function renderColGrid(){
     el.appendChild(d);
   });
 }
+var colKey = '';
+var colShown = 0;
+var COL_PAGE = 10;
 function showCol(key){
+  colKey = key;
+  colShown = 0;
   var def = COLDEF[key] || COLDEF['social'];
   var items = COLS_DATA[key] || [];
   document.getElementById('colPIco').textContent = def.ico;
   document.getElementById('colPTt').textContent = def.tt;
   document.getElementById('colPSub').textContent = items.length + ' 篇 · ' + def.sub;
-  var list = document.getElementById('colPList'); list.innerHTML = '';
+  document.getElementById('colPList').innerHTML = '';
   if(!items.length){
-    list.innerHTML = '<div style="text-align:center;color:var(--sub);padding:40px 0;font-size:14px">内容筹备中，欢迎投稿</div>';
+    document.getElementById('colPList').innerHTML = '<div style="text-align:center;color:var(--sub);padding:40px 0;font-size:14px">内容筹备中，欢迎投稿</div>';
+    document.getElementById('colMoreWrap').style.display = 'none';
   } else {
-    items.forEach(function(it){
-      var a = document.createElement('a');
-      a.className = 'colp-item';
-      a.href = safeUrl(it.u); a.target = '_blank'; a.rel = 'noopener noreferrer';
-      var sum = it.s ? '<div class="s">'+esc(it.s)+'</div>' : '';
-      a.innerHTML = '<div class="t">'+esc(it.t)+'</div>'+sum+'<div class="meta"><span class="src">来源：'+esc(it.o)+'</span><span>'+esc(it.d)+'</span><span class="go">阅读全文 ›</span></div>';
-      list.appendChild(a);
-    });
+    appendColItems();
   }
   document.getElementById('colPage').style.display = 'block';
   document.getElementById('colPage').scrollTop = 0;
   window.scrollTo(0,0);
 }
+function appendColItems(){
+  var items = COLS_DATA[colKey] || [];
+  var list = document.getElementById('colPList');
+  var end = Math.min(colShown + COL_PAGE, items.length);
+  for(var i = colShown; i < end; i++){
+    var it = items[i];
+    var a = document.createElement('a');
+    a.className = 'colp-item';
+    a.href = safeUrl(it.u); a.target = '_blank'; a.rel = 'noopener noreferrer';
+    var sum = it.s ? '<div class="s">'+esc(it.s)+'</div>' : '';
+    a.innerHTML = '<div class="t">'+esc(it.t)+'</div>'+sum+'<div class="meta"><span class="src">来源：'+esc(it.o)+'</span><span>'+esc(it.d)+'</span><span class="go">阅读全文 ›</span></div>';
+    list.appendChild(a);
+  }
+  colShown = end;
+  var mw = document.getElementById('colMoreWrap');
+  if(colShown < items.length){
+    mw.style.display = 'block';
+    document.getElementById('colMoreBtn').textContent = '加载更多（' + (items.length - colShown) + '）';
+    document.getElementById('colMoreCnt').textContent = '已加载 ' + colShown + ' / ' + items.length + ' 篇';
+  } else {
+    mw.style.display = 'block';
+    document.getElementById('colMoreBtn').textContent = '已全部加载';
+    document.getElementById('colMoreBtn').disabled = true;
+    document.getElementById('colMoreBtn').style.opacity = '.55';
+    document.getElementById('colMoreCnt').textContent = '共 ' + items.length + ' 篇';
+  }
+}
+document.getElementById('colMoreBtn').addEventListener('click', appendColItems);
 function showHome(){
   document.getElementById('colPage').style.display = 'none';
   document.getElementById('aboutPage').style.display = 'none';
@@ -838,7 +874,7 @@ function render(){
       '</div></div>';
     el.appendChild(card);
   });
-  document.getElementById('stShow').textContent = total;
+  document.getElementById('stShow').textContent = shown;
   document.getElementById('empty').style.display = total ? 'none' : 'block';
   var mw = document.getElementById('moreWrap');
   if(total > shownMax){ mw.style.display = 'block'; }
@@ -889,7 +925,7 @@ render();
 """
 
 # 专栏数据：从 articles.json 动态构建（结构 {分类: [{t,s,o,d,u}]}）
-COLS_KEYS = ['social', 'doing', 'company', 'policy', 'teach', 'activity']
+COLS_KEYS = ['social', 'doing', 'company', 'policy', 'teach', 'activity', 'resource', 'intl']
 cols_data = {}
 for key in COLS_KEYS:
     items = []

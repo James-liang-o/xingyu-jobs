@@ -351,9 +351,33 @@ SEED_ACTIVITY = [
     {"t": "福建第二十次全国特奥日活动：趣味运动促康复", "s": "福建省特奥日活动以“运动无界，融合有爱”为主题，将体育健身、康复训练与趣味互动深度结合，为智力残疾人搭建展示自我的平台。", "u": "http://fjnews.fjsen.com/wap/2026-07/30/content_32227871.htm", "o": "东南网", "d": "2026-07-30"},
 ]
 
+# 资源导航：告诉心智障碍求职者"去哪里找资源"（官方入口，手工维护）
+SEED_RESOURCE = [
+    {"t": "中国残联就业服务平台：全国残疾人岗位总入口", "s": "中国残联官方就业平台，汇集全国残疾人招聘岗位，支持按地区、残疾类型筛选，岗位实时更新。求职者免费注册使用。", "u": "https://www.cdpee.org.cn/", "o": "中国残疾人联合会", "d": "长期有效"},
+    {"t": "中国残疾人联合会官网：政策与权益总站", "s": "中国残联官网，发布残疾人事业政策文件、工作动态、康复与就业服务信息，是了解国家助残政策的第一官方渠道。", "u": "https://www.cdpf.org.cn/", "o": "中国残疾人联合会", "d": "长期有效"},
+    {"t": "中国残疾人服务网（中国残疾人网）：信息聚合平台", "s": "中国残联主管的残疾人综合服务网站，覆盖新闻资讯、康复知识、就业指导、法律援助等栏目，适合查找各类服务信息。", "u": "https://www.chinadp.net.cn/", "o": "中国残疾人服务网", "d": "长期有效"},
+    {"t": "12385 残疾人服务热线：全国统一求助电话", "s": "全国残疾人服务热线 12385，遇到政策咨询、维权求助、服务指引等问题可直接拨打，由残联系统提供专业解答。", "u": "https://www.cdpf.org.cn/", "o": "中国残疾人联合会", "d": "长期有效"},
+    {"t": "残疾人证办理：本地残联窗口 + 线上申请", "s": "残疾人证是享受各项助残政策的基础凭证，到户籍所在地残联申请办理。持证后可享受就业帮扶、生活补贴、康复救助等政策。", "u": "https://www.cdpf.org.cn/", "o": "中国残疾人联合会", "d": "长期有效"},
+    {"t": "各省市残联官网导航：找本地服务", "s": "各省（市、区）残联官网提供本地就业服务、康复机构、政策补贴信息。搜索「XX省/市残疾人联合会」即可找到本地官方入口。", "u": "https://www.cdpf.org.cn/", "o": "中国残疾人联合会", "d": "长期有效"},
+    {"t": "残疾人就业保障金与超比例奖励政策", "s": "企业按比例安排残疾人就业可减免残保金，超比例安置还能获得奖励。这既是企业责任，也是求职者争取岗位的政策依据。", "u": "https://www.cdpf.org.cn/", "o": "中国残疾人联合会", "d": "长期有效"},
+    {"t": "辅助性就业与支持性就业机构", "s": "对就业能力较弱的智力/精神障碍者，可通过辅助性就业机构、支持性就业辅导员获得庇护性就业岗位和长期就业支持。", "u": "https://www.cdpf.org.cn/", "o": "中国残疾人联合会", "d": "长期有效"},
+    {"t": "特殊教育学校：职业教育与就业衔接", "s": "各地特教学校开设职业高中班（中西面点、家政、电商等专业），与高职院校贯通培养，毕业可衔接就业或升学。", "u": "https://www.cdpf.org.cn/", "o": "中国残疾人联合会", "d": "长期有效"},
+    {"t": "人社部门公共就业服务：职业指导与岗位推荐", "s": "各地人社部门公共就业服务机构为残疾人提供免费职业指导、岗位推荐、就业援助，符合条件的纳入就业困难人员帮扶范围。", "u": "https://www.mohrss.gov.cn/", "o": "人力资源和社会保障部", "d": "长期有效"},
+]
+
+# 国际视野：官方机构发布的残疾就业内容（英文原文，官方来源）
+SEED_INTL = [
+    {"t": "WHO《残疾与健康》事实文件", "s": "世界卫生组织官方发布：全球约 16% 人口（约 13 亿）存在某种残疾，残疾人在就业、教育、健康服务方面面临更多障碍，并介绍如何通过政策消除障碍。", "u": "https://www.who.int/news-room/fact-sheets/detail/disability-and-health", "o": "世界卫生组织 WHO", "d": "长期有效"},
+    {"t": "WHO《世界残疾报告》：就业章节导读", "s": "世界卫生组织与世行联合发布的《世界残疾报告》指出，全球残疾人就业率显著低于非残疾人，并提出促进包容性就业的政策建议。", "u": "https://www.who.int/teams/noncommunicable-diseases/sensory-functions-disability-and-rehabilitation/world-report-on-disability", "o": "世界卫生组织 WHO", "d": "长期有效"},
+    {"t": "国际劳工组织 ILO：残疾与工作主题页", "s": "国际劳工组织（ILO）关于残疾与工作的官方专题：推动包容性劳动力市场、合理便利措施、残疾人职业培训与就业权利。", "u": "https://www.ilo.org/topics/disability-and-work", "o": "国际劳工组织 ILO", "d": "长期有效"},
+    {"t": "联合国《残疾人权利公约》：就业权条款", "s": "《残疾人权利公约》第 27 条工作与就业：缔约国应保障残疾人享有与其他人平等的工作权利，包括开放、包容和无障碍的工作环境。", "u": "https://www.un.org/development/desa/disabilities/convention-on-the-rights-of-persons-with-disabilities.html", "o": "联合国 UN", "d": "长期有效"},
+    {"t": "联合国残疾与包容：专题页面", "s": "联合国经济和社会事务部（UN DESA）残疾人事务专题页，发布全球残疾人权利、就业与包容发展的官方报告与数据。", "u": "https://www.un.org/development/desa/disabilities/", "o": "联合国 UN", "d": "长期有效"},
+]
+
 def build():
     print('=== 行隅专栏爬虫 v3 ===')
-    cols = {'social': [], 'doing': [], 'company': [], 'policy': [], 'teach': [], 'activity': []}
+    cols = {'social': [], 'doing': [], 'company': [], 'policy': [], 'teach': [], 'activity': [],
+            'resource': [], 'intl': []}
 
     # 1. 中国残联官网工作动态（主力，翻页）
     for it in crawl_cdpf():
@@ -400,6 +424,10 @@ def build():
         cols['teach'].append({'title': it['t'], 'summary': it['s'], 'source': it['o'], 'date': it['d'], 'url': it['u']})
     for it in SEED_ACTIVITY:
         cols['activity'].append({'title': it['t'], 'summary': it['s'], 'source': it['o'], 'date': it['d'], 'url': it['u']})
+    for it in SEED_RESOURCE:
+        cols['resource'].append({'title': it['t'], 'summary': it['s'], 'source': it['o'], 'date': it['d'], 'url': it['u']})
+    for it in SEED_INTL:
+        cols['intl'].append({'title': it['t'], 'summary': it['s'], 'source': it['o'], 'date': it['d'], 'url': it['u']})
 
     # 5. 历史累积：读取已有 articles.json 合并（内容只增不减）
     try:
@@ -412,19 +440,19 @@ def build():
     except Exception as e:
         print('  历史累积: 无旧数据或读取失败', str(e)[:40])
 
-    # 6. 去重 + 按日期倒序
+    # 6. 去重 + 按日期倒序（按标题去重：同一文章标题才算重复）
     for k in cols:
         seen = set()
         uniq = []
         for it in cols[k]:
-            key = (it.get('url') or it.get('title', ''))
-            if key in seen:
+            key = it.get('title', '')
+            if not key or key in seen:
                 continue
             seen.add(key)
             uniq.append(it)
         uniq.sort(key=lambda x: x.get('date', ''), reverse=True)
-        # 每类最多保留 60 篇（保持"50 个左右"的自然浮动）
-        cols[k] = uniq[:60]
+        # 不设上限：有多少放多少，作为聚合搜索库（前端分页加载）
+        cols[k] = uniq
 
     out = dict(cols)
     out['updated_at'] = time.strftime('%Y-%m-%d %H:%M:%S')

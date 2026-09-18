@@ -265,7 +265,7 @@ def main():
 
     # ===== 来源1：中国残联动态接口（全国） =====
     print('[1/6] 中国残联动态接口（全国，全量翻页，仅保留心智障碍）...')
-    api_jobs = fetch_national_api(pages=60, page_size=500)
+    api_jobs = fetch_national_api(pages=200, page_size=500)
     # 只保留心智障碍可投岗位（智力残疾 / 精神残疾）
     api_mh = [j for j in api_jobs if j.get('is_mh')]
     jobs.extend(api_mh)
@@ -273,13 +273,13 @@ def main():
 
     # ===== 来源2：甘肃省残疾人就业创业网络服务平台 =====
     print('[2/6] 甘肃省残疾人就业创业网络服务平台...')
-    gs_jobs = fetch_prov_api('https://gansu.cdpee.org.cn', pages=5)
+    gs_jobs = fetch_prov_api('https://gansu.cdpee.org.cn', pages=15)
     jobs.extend(gs_jobs)
     print('  甘肃岗位数:', len(gs_jobs))
 
     # ===== 来源3：湖北省残疾人求职招聘信息平台 =====
     print('[3/6] 湖北省残疾人求职招聘信息平台...')
-    hb_jobs = fetch_hubei_api(pages=5)
+    hb_jobs = fetch_hubei_api(pages=15)
     jobs.extend(hb_jobs)
     print('  湖北岗位数:', len(hb_jobs))
 
