@@ -481,6 +481,10 @@ HTML_DOC = """<!DOCTYPE html>
   /* 统计条 */
   .stat{display:flex;gap:16px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:12px;color:var(--sub)}
   .stat b{color:var(--primary);font-size:15px}
+  .stat b.ok{color:#0F7B3E}
+  .stat b.off{color:#94A3B8}
+  .stat b.ok{color:#0F7B3E}
+  .stat b.off{color:#94A3B8}
   /* 数据总览 */
   .statpage{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:30;overflow-y:auto;padding:0 16px 30px}
   .statcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
@@ -618,7 +622,7 @@ HTML_DOC = """<!DOCTYPE html>
 </div>
 
 
-<div class="stat"><span>岗位 <b id="stTotal">__TOTAL__</b></span><span>城市 <b id="stCity">__CITIES__</b></span><span>当前显示 <b id="stShow">0</b></span><span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="favtoggle" onclick="nearbyJobs()" title="定位到我所在城市，自动筛选该城市岗位"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"></path><circle cx="12" cy="10" r="2.6"></circle></svg>附近岗位</button><button class="favtoggle" id="favToggle" onclick="toggleFavMode()">★ 我的收藏 (<span id="favCount">0</span>)</button><button class="favtoggle" id="favExport" onclick="exportFav()" style="display:none" title="把收藏的岗位整理成文字发给家长/机构">导出收藏</button><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="onlyValid" checked> 仅看有效</label></span></div>
+<div class="stat"><span>岗位 <b id="stTotal">__TOTAL__</b></span><span>有效 <b class="ok" id="stValid">__VALID__</b></span><span>失效 <b class="off" id="stInvalid">__EXPIRED__</b></span><span>城市 <b id="stCity">__CITIES__</b></span><span>当前显示 <b id="stShow">0</b></span><span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="favtoggle" onclick="nearbyJobs()" title="定位到我所在城市，自动筛选该城市岗位"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"></path><circle cx="12" cy="10" r="2.6"></circle></svg>附近岗位</button><button class="favtoggle" id="favToggle" onclick="toggleFavMode()">★ 我的收藏 (<span id="favCount">0</span>)</button><button class="favtoggle" id="favExport" onclick="exportFav()" style="display:none" title="把收藏的岗位整理成文字发给家长/机构">导出收藏</button><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="onlyValid" checked> 仅看有效</label></span></div>
 
 <div class="list" id="list"></div>
 <div class="more-wrap" id="moreWrap" style="display:none"><button class="more-btn" id="moreBtn">加载更多岗位</button></div>
@@ -2029,7 +2033,9 @@ for key in COLS_KEYS:
     cols_data[key] = items
 js_cols = json.dumps(cols_data, ensure_ascii=False)
 
-HTML_DOC = HTML_DOC.replace('__UPDATED__', esc(updated_at)).replace('__TOTAL__', str(total)).replace('__CITIES__', str(len(all_cities)))
+valid_cnt = sum(1 for j in js_rows if j.get('st') != 'expired')
+expired_cnt = total - valid_cnt
+HTML_DOC = HTML_DOC.replace('__UPDATED__', esc(updated_at)).replace('__TOTAL__', str(total)).replace('__VALID__', str(valid_cnt)).replace('__EXPIRED__', str(expired_cnt)).replace('__CITIES__', str(len(all_cities)))
 HTML_DOC = HTML_DOC.replace('__JS_CHUNK0__', js_chunk0).replace('__JS_CITIES__', js_cities)
 HTML_DOC = HTML_DOC.replace('__CHUNK_TOTAL__', str(chunk_total))
 HTML_DOC = HTML_DOC.replace('__COLS_DATA__', js_cols)
