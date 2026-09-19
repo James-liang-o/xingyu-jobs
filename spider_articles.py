@@ -512,9 +512,9 @@ def build():
             tags.add('mental')
         if ph:
             tags.add('physical')
-        # 通用残疾人就业内容：只进主站（mh），三站专栏按人群个性化区分
+        # 通用残疾人就业内容：三站可共享；人群专属内容只进对应站（个性化核心）
         if not tags and any(k in t for k in REL_KEYS):
-            tags = {'mh'}
+            tags = {'mh', 'mental', 'physical'}
         if not tags:
             tags = {'mh'}  # 兜底：默认放心智站
         it['cr'] = sorted(tags)
