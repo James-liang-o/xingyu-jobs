@@ -1780,8 +1780,8 @@ render();
 renderFilters();
 
 // ===== 设置面板：字号滑条 / 深色 / 简化版 / 朗读 =====
-function openSettings(){ document.getElementById('setMask').style.display = 'flex'; }
-function closeSettings(){ document.getElementById('setMask').style.display = 'none'; }
+function openSettings(){ document.getElementById('setMask').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+function closeSettings(){ document.getElementById('setMask').style.display = 'none'; document.body.style.overflow = ''; }
 function toggleFp(){ var m = document.getElementById('fpMask'); m.style.display = (m.style.display === 'block') ? 'none' : 'block'; }
 function closeFp(){ document.getElementById('fpMask').style.display = 'none'; }
 var ZOOM_SUPPORT = (function(){ try{ var d = document.documentElement; d.style.zoom = '1'; var ok = d.style.zoom === '1'; d.style.zoom = ''; return ok; }catch(e){ return false; } })();
@@ -1839,8 +1839,8 @@ function toggleRead(){
   toast('正在朗读当前列表前 ' + Math.min(heads.length, 15) + ' 条岗位');
 }
 // ===== 分享 =====
-function openShare(){ document.getElementById('shareMask').style.display = 'flex'; }
-function closeShare(){ document.getElementById('shareMask').style.display = 'none'; }
+function openShare(){ document.getElementById('shareMask').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+function closeShare(){ document.getElementById('shareMask').style.display = 'none'; document.body.style.overflow = ''; }
 function copyShare(){
   var url = 'https://james-liang-o.github.io/xingyu-jobs/';
   if(navigator.clipboard && navigator.clipboard.writeText){

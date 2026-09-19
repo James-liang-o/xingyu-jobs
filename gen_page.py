@@ -1998,8 +1998,8 @@ render();
 renderFilters();
 
 // ===== 设置面板：字号滑条 / 深色 / 简化版 / 朗读 =====
-function openSettings(){ document.getElementById('setMask').style.display = 'flex'; }
-function closeSettings(){ document.getElementById('setMask').style.display = 'none'; }
+function openSettings(){ document.getElementById('setMask').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+function closeSettings(){ document.getElementById('setMask').style.display = 'none'; document.body.style.overflow = ''; }
 function toggleFp(){ var m = document.getElementById('fpMask'); m.style.display = (m.style.display === 'block') ? 'none' : 'block'; }
 function closeFp(){ document.getElementById('fpMask').style.display = 'none'; }
 var ZOOM_SUPPORT = (function(){ try{ var d = document.documentElement; d.style.zoom = '1'; var ok = d.style.zoom === '1'; d.style.zoom = ''; return ok; }catch(e){ return false; } })();
@@ -2057,8 +2057,8 @@ function toggleRead(){
   toast('正在朗读当前列表前 ' + Math.min(heads.length, 15) + ' 条岗位');
 }
 // ===== 分享 =====
-function openShare(){ document.getElementById('shareMask').style.display = 'flex'; }
-function closeShare(){ document.getElementById('shareMask').style.display = 'none'; }
+function openShare(){ document.getElementById('shareMask').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+function closeShare(){ document.getElementById('shareMask').style.display = 'none'; document.body.style.overflow = ''; }
 function copyShare(){
   var url = 'https://james-liang-o.github.io/xingyu-jobs/';
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -2142,6 +2142,9 @@ def _sitep(text):
     text = text.replace('帮助心智障碍者融入社会', '帮助' + CFG['crowd_org'] + '融入社会')
     text = text.replace('适合心智障碍（智力、精神、自闭症谱系等）求职者', '适合' + CFG['fit'] + '求职者')
     text = text.replace('心智障碍（智力残疾、精神残疾等）求职者的公益岗位', CFG['crowd'] + '的公益岗位')
+    # 朗读开头语、分享按钮里的站点 URL（JS 字符串）
+    text = text.replace("lines.push('行隅，", "lines.push('" + CFG['name'] + "，")
+    text = text.replace("var url = 'https://james-liang-o.github.io/xingyu-jobs/';", "var url = 'https://james-liang-o.github.io/" + CFG['share'] + "/';")
     return text
 
 HTML_DOC = _sitep(HTML_DOC)
