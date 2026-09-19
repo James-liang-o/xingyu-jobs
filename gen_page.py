@@ -33,6 +33,8 @@ SITES = {
         'name': '行隅', 'title': '行隅 · 心智障碍就业导航', 'nav': '心智障碍就业导航',
         'out': '行隅_全国岗位导航.html', 'arts': 'articles.json', 'share': 'xingyu-jobs',
         'crowd': '心智障碍（智力残疾、发育障碍：唐氏、自闭症、阿斯伯格等）求职者',
+        'crowd_people': '心智障碍青年', 'crowd_org': '心智障碍人士',
+        'fit': '智力、自闭症谱系、发育障碍等',
         'desc': '行隅：为心智障碍（智力残疾、发育障碍，如唐氏综合征、自闭症、阿斯伯格等）求职者提供全国可投岗位信息导航，聚合中国残联就业服务平台等公开渠道岗位，附就业政策、机构案例、企业故事、投稿与交流，帮助心智障碍者实现就业。',
         'keywords': '心智障碍就业,智力残疾就业,自闭症就业,唐氏综合征就业,残疾人岗位,助残就业,行隅',
         'mail_pre': '行隅', 'v': 'v2.22',
@@ -41,6 +43,8 @@ SITES = {
         'name': '心行', 'title': '心行 · 精神障碍就业导航', 'nav': '精神障碍就业导航',
         'out': '心行_精神障碍岗位导航.html', 'arts': 'articles_mental.json', 'share': 'xingyu-mental',
         'crowd': '精神障碍（抑郁症、焦虑症、双相情感障碍等）求职者',
+        'crowd_people': '精神障碍青年', 'crowd_org': '精神障碍人士',
+        'fit': '精神障碍、抑郁症、焦虑症、双相等',
         'desc': '心行：为精神障碍（抑郁症、焦虑症、双相等）求职者提供全国可投岗位信息导航，聚合中国残联就业服务平台等公开渠道岗位，附心理康复、就业政策、求职指南、投稿与交流，帮助精神障碍人士实现就业。',
         'keywords': '精神障碍就业,抑郁症就业,焦虑症就业,精神残疾就业,残疾人岗位,助残就业,心行',
         'mail_pre': '心行', 'v': 'v1.0',
@@ -49,6 +53,8 @@ SITES = {
         'name': '健行', 'title': '健行 · 身体残疾就业导航', 'nav': '身体残疾就业导航',
         'out': '健行_身体残疾岗位导航.html', 'arts': 'articles_physical.json', 'share': 'xingyu-physical',
         'crowd': '身体残疾（肢体、视力、听力、言语）求职者',
+        'crowd_people': '身体残疾青年', 'crowd_org': '身体残疾人士',
+        'fit': '肢体、视力、听力、言语等身体残疾',
         'desc': '健行：为身体残疾（肢体、视力、听力、言语残疾）求职者提供全国可投岗位信息导航，聚合中国残联就业服务平台等公开渠道岗位，附就业政策、企业案例、无障碍资讯、投稿与交流，帮助身体残疾人士实现就业。',
         'keywords': '肢体残疾就业,视力残疾就业,听力残疾就业,言语残疾就业,残疾人岗位,助残就业,健行',
         'mail_pre': '健行', 'v': 'v1.0',
@@ -2130,6 +2136,12 @@ def _sitep(text):
     text = text.replace('title=行隅·', 'title=' + CFG['name'] + '·')
     text = text.replace('data=https%3A%2F%2Fjames-liang-o.github.io%2Fxingyu-jobs%2F', 'data=https%3A%2F%2Fjames-liang-o.github.io%2F' + CFG['share'] + '%2F')
     text = text.replace('url=https%3A%2F%2Fjames-liang-o.github.io%2Fxingyu-jobs%2F', 'url=https%3A%2F%2Fjames-liang-o.github.io%2F' + CFG['share'] + '%2F')
+    # logo alt、通知栏、社交副标题、企业登记适配（按站区分人群）
+    text = text.replace('alt="行隅"', 'alt="' + CFG['name'] + '"')
+    text = text.replace('帮助心智障碍青年实现就业', '帮助' + CFG['crowd_people'] + '实现就业')
+    text = text.replace('帮助心智障碍者融入社会', '帮助' + CFG['crowd_org'] + '融入社会')
+    text = text.replace('适合心智障碍（智力、精神、自闭症谱系等）求职者', '适合' + CFG['fit'] + '求职者')
+    text = text.replace('心智障碍（智力残疾、精神残疾等）求职者的公益岗位', CFG['crowd'] + '的公益岗位')
     return text
 
 HTML_DOC = _sitep(HTML_DOC)
