@@ -1,9 +1,11 @@
 name: update-jobs
 on:
   schedule:
-    # 岗位每天更新一次：UTC 每天 10:15（北京时间 18:15），失效岗位自动标记保留
+    # 岗位每天更新一次：UTC 每天 10:15（北京时间 18:15），全量爬取+三站生成
     - cron: '15 10 * * *'
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,10 +19,32 @@ jobs:
       - run: python gen_page.py
         env:
           OWN_KEY: ${{ secrets.XINGYU_OWN_KEY }}
-      - name: Commit updated data
+      - run: python gen_page.py mental
+        env:
+          OWN_KEY: ${{ secrets.XINGYU_OWN_KEY }}
+      - run: python gen_page.py physical
+        env:
+          OWN_KEY: ${{ secrets.XINGYU_OWN_KEY }}
+      - name: Commit & push 主站
         run: |
           git config user.name "xingyu-bot"
           git config user.email "xingyu-bot@users.noreply.github.com"
           git add -A
           git diff --cached --quiet || git commit -m "auto update $(date +'%Y-%m-%d %H:%M')"
           git push
+      - name: Push 心行 / 健行 友站
+        if: ${{ secrets.XINGYU_PAT != '' }}
+        env:
+          PAT: ${{ secrets.XINGYU_PAT }}
+        run: |
+          git config --global user.name "xingyu-bot"
+          git config --global user.email "xingyu-bot@users.noreply.github.com"
+          for repo in "xingyu-mental:心行_精神障碍岗位导航.html" "xingyu-physical:健行_身体残疾岗位导航.html"; do
+            r="${repo%%:*}"; f="${repo##*:}"
+            rm -rf /tmp/$r && git clone -q --depth 1 "https://x:${PAT}@github.com/James-liang-o/${r}.git" /tmp/$r
+            cp "$f" /tmp/$r/index.html
+            cd /tmp/$r
+            git add -A
+            git diff --cached --quiet || { git commit -m "auto update $(date +'%Y-%m-%d %H:%M')"; git push -q; }
+            cd "$GITHUB_WORKSPACE"
+          done

@@ -26,6 +26,14 @@ MH_KEYS = ['智力残疾', '精神残疾', '智力障碍', '精神障碍', '心�
            '智力', '精神残疾', '智残', '精残']
 # 一般残疾人就业相关（含"残疾"语境即保留）
 REL_KEYS = ['残疾人', '残障', '残疾', '助残']
+# 精神障碍人群专属关键词（心行站专栏）
+MENTAL_KEYS = ['精神残疾', '精神障碍', '抑郁症', '抑郁', '焦虑', '双相', '强迫症', '创伤后应激',
+               '心理康复', '心理服务', '心理健康', '心理咨询', '心理援助', '心理热线', '精残', '精障',
+               '精神分裂', '康复期', '回归社会', '情感障碍', '心理治疗', '心理支持']
+# 身体残疾人群专属关键词（健行站专栏）
+PHYS_KEYS = ['肢体残疾', '视力残疾', '听力残疾', '言语残疾', '肢残', '视残', '听残', '语残',
+             '盲人', '聋人', '轮椅', '截瘫', '脊髓', '假肢', '助听器', '视力障碍', '听力障碍',
+             '肢体障碍', '言语障碍', '视障', '听障', '肢障', '无障碍环境', '无障碍设施']
 
 # 专栏分类关键词（按优先级）
 COL_RULES = [
@@ -462,14 +470,46 @@ def build():
         # 不设上限：有多少放多少，作为聚合搜索库（前端分页加载）
         cols[k] = uniq
 
-    out = dict(cols)
-    out['updated_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    with open('articles.json', 'w', encoding='utf-8') as f:
-        json.dump(out, f, ensure_ascii=False, indent=1)
+    # 7. 人群打标：一篇文章可同时属于多个站（mh=心智 / mental=精神 / physical=身体）
+    def _crowd(it):
+        t = (it.get('title', '') or '') + ' ' + (it.get('summary', '') or '')
+        m = any(k in t for k in MH_KEYS)
+        mt = any(k in t for k in MENTAL_KEYS)
+        ph = any(k in t for k in PHYS_KEYS)
+        tags = set()
+        if m:
+            tags.add('mh')
+        if mt:
+            tags.add('mental')
+        if ph:
+            tags.add('physical')
+        # 通用残疾人就业内容：三站都放
+        if not tags and any(k in t for k in REL_KEYS):
+            tags = {'mh', 'mental', 'physical'}
+        if not tags:
+            tags = {'mh'}  # 兜底：默认放心智站
+        it['cr'] = sorted(tags)
+        return tags
+
+    for k in cols:
+        for it in cols[k]:
+            _crowd(it)
+
+    def _write(fname, crowd):
+        c = {}
+        for k in cols:
+            c[k] = [it for it in cols[k] if crowd in (it.get('cr') or [])]
+        c['updated_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        with open(fname, 'w', encoding='utf-8') as f:
+            json.dump(c, f, ensure_ascii=False, indent=1)
+        print('写入', fname, {k: len(v) for k, v in c.items() if k != 'updated_at'})
+
+    _write('articles.json', 'mh')
+    _write('articles_mental.json', 'mental')
+    _write('articles_physical.json', 'physical')
     print('=== 完成 ===')
     for k, v in cols.items():
         print(f'  {k}: {len(v)} 条')
-    print('写入 articles.json')
 
 if __name__ == '__main__':
     build()

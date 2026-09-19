@@ -24,9 +24,52 @@ OWN_HASH = _djb2(_own_key)
 # ================================================================
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+
+# ================= 多站点支持：SITE = mh(心智) / mental(精神) / physical(身体) =================
+import sys
+SITE = sys.argv[1] if len(sys.argv) > 1 else 'mh'
+SITES = {
+    'mh': {
+        'name': '行隅', 'title': '行隅 · 心智障碍就业导航', 'nav': '心智障碍就业导航',
+        'out': '行隅_全国岗位导航.html', 'arts': 'articles.json', 'share': 'xingyu-jobs',
+        'crowd': '心智障碍（智力残疾、精神残疾等）求职者',
+        'desc': '行隅：为心智障碍（智力残疾、精神残疾）求职者提供全国可投岗位信息导航，聚合中国残联就业服务平台等公开渠道岗位，附就业政策、机构案例、企业故事、投稿与交流，帮助心智障碍青年实现就业。',
+        'keywords': '心智障碍就业,智力残疾就业,精神残疾就业,残疾人岗位,助残就业,支持性就业,行隅',
+        'mail_pre': '行隅', 'v': 'v2.22',
+    },
+    'mental': {
+        'name': '心行', 'title': '心行 · 精神障碍就业导航', 'nav': '精神障碍就业导航',
+        'out': '心行_精神障碍岗位导航.html', 'arts': 'articles_mental.json', 'share': 'xingyu-mental',
+        'crowd': '精神障碍（抑郁症、焦虑症、双相情感障碍等）求职者',
+        'desc': '心行：为精神障碍（抑郁症、焦虑症、双相等）求职者提供全国可投岗位信息导航，聚合中国残联就业服务平台等公开渠道岗位，附心理康复、就业政策、求职指南、投稿与交流，帮助精神障碍人士实现就业。',
+        'keywords': '精神障碍就业,抑郁症就业,焦虑症就业,精神残疾就业,残疾人岗位,助残就业,心行',
+        'mail_pre': '心行', 'v': 'v1.0',
+    },
+    'physical': {
+        'name': '健行', 'title': '健行 · 身体残疾就业导航', 'nav': '身体残疾就业导航',
+        'out': '健行_身体残疾岗位导航.html', 'arts': 'articles_physical.json', 'share': 'xingyu-physical',
+        'crowd': '身体残疾（肢体、视力、听力、言语）求职者',
+        'desc': '健行：为身体残疾（肢体、视力、听力、言语残疾）求职者提供全国可投岗位信息导航，聚合中国残联就业服务平台等公开渠道岗位，附就业政策、企业案例、无障碍资讯、投稿与交流，帮助身体残疾人士实现就业。',
+        'keywords': '肢体残疾就业,视力残疾就业,听力残疾就业,言语残疾就业,残疾人岗位,助残就业,健行',
+        'mail_pre': '健行', 'v': 'v1.0',
+    },
+}
+# 贴吧社区横幅：心行站挂「心理障碍就业吧」（精神障碍对应"心理"）；
+# 行隅主站暂不挂（用户将另建「心智障碍就业吧」）；健行站挂「健行求职吧」
+TIEBA = {
+    'mh': None,
+    'mental': {'url': 'https://tieba.baidu.com/f?kw=%E5%BF%83%E7%90%86%E9%9A%9C%E7%A2%8D%E5%B0%B1%E4%B8%9A',
+               'badge': '心行社区', 'title': '心理障碍就业吧 · 官方讨论区',
+               'sub': '来聊聊求职路上的故事和疑问——求职者、家长、机构、志愿者都在这里'},
+    'physical': {'url': 'https://tieba.baidu.com/f?kw=%E5%81%A5%E8%A1%8C%E6%B1%82%E8%81%8C',
+                 'badge': '健行社区', 'title': '健行求职吧 · 官方讨论区',
+                 'sub': '来聊聊求职路上的故事和疑问——肢体、视力、听力、言语障碍的求职者、家属、机构、志愿者都在这里'},
+}
+CFG = SITES[SITE]
+
 with open(os.path.join(BASE, 'jobs_national.json'), encoding='utf-8') as f:
     data = json.load(f)
-with open(os.path.join(BASE, 'articles.json'), encoding='utf-8') as f:
+with open(os.path.join(BASE, CFG['arts']), encoding='utf-8') as f:
     articles = json.load(f)
 try:
     with open(os.path.join(BASE, 'logo_b64.txt'), encoding='utf-8') as f:
@@ -48,7 +91,23 @@ total_mh = data.get('total_mh', 0)
 # 精简字段，只留展示所需
 rows = []
 seen_codes = set()
+
+def _site_fit(j):
+    """站点人群过滤：面向谁就放谁；未标明类型的通用岗位三个站都放"""
+    ds = j.get('dis_str') or ''
+    if not ds.strip():
+        return True
+    if SITE == 'mh':
+        return bool(j.get('is_mh'))
+    if SITE == 'mental':
+        return bool(j.get('is_mental'))
+    if SITE == 'physical':
+        return bool(j.get('is_physical'))
+    return True
+
 for j in jobs:
+    if not _site_fit(j):
+        continue
     _cd = str(j.get('code', ''))
     if _cd in seen_codes:
         continue
@@ -559,14 +618,7 @@ HTML_DOC = """<!DOCTYPE html>
   <span class="ntxt">行隅 · 心智障碍就业导航正式上线：聚合全国 4000+ 可投岗位，帮助心智障碍青年实现就业。点击查看关于我们</span>
   <span class="ngo">关于 ›</span>
 </div>
-<div class="tieba-banner" onclick="window.open('https://tieba.baidu.com/f?kw=%E5%BF%83%E7%90%86%E9%9A%9C%E7%A2%8D%E5%B0%B1%E4%B8%9A','_blank','noopener')">
-  <div class="tb-left">
-    <div class="tb-badge">行隅社区</div>
-    <div class="tb-title">心理障碍就业吧 · 官方讨论区</div>
-    <div class="tb-sub">来聊聊求职路上的故事和疑问——求职者、家长、机构、志愿者都在这里</div>
-  </div>
-  <div class="tb-go">前往 ›</div>
-</div>
+__TIEBA_BANNER__
 <div class="cols-title"><h2>专栏</h2><span>社会认知 · 真实故事 · 政策教学 · 社会活动</span></div>
 <div class="col-grid" id="colGrid"></div>
 <div class="searchbar"><input id="q" placeholder="搜索岗位名称、公司、城市…" autocomplete="off"></div>
@@ -2044,7 +2096,94 @@ HTML_DOC = HTML_DOC.replace('__OWN_HASH__', OWN_HASH)
 # 岗位总数占位符（meta 等处的 __TOTAL__ 由上方统一替换，此处兜底）
 HTML_DOC = HTML_DOC.replace('__TOTAL__', str(total))
 
-out = os.path.join(BASE, '行隅_全国岗位导航.html')
+# 站点文案替换（只作用于页面静态文案；数据 JSON 已在前方注入，不受影响）
+def _sitep(text):
+    text = text.replace('行隅 · 心智障碍就业导航', CFG['title'])
+    text = text.replace('行隅·心智障碍就业导航', CFG['title'].replace(' · ', '·'))
+    text = text.replace('心智障碍（智力残疾、精神残疾等）求职者', CFG['crowd'])
+    text = text.replace('心智障碍就业导航', CFG['nav'])
+    text = re.sub(r'<meta name="description" content="[^"]*">', '<meta name="description" content="' + CFG['desc'] + '">', text, count=1)
+    text = re.sub(r'<meta name="keywords" content="[^"]*">', '<meta name="keywords" content="' + CFG['keywords'] + '">', text, count=1)
+    text = re.sub(r'<meta property="og:title" content="[^"]*">', '<meta property="og:title" content="' + CFG['title'] + '">', text, count=1)
+    text = re.sub(r'<meta property="og:description" content="[^"]*">', '<meta property="og:description" content="' + CFG['crowd'] + '可投岗位信息导航。">', text, count=1)
+    text = text.replace('<title>行隅 · 心智障碍就业导航 - 全国助残岗位信息平台</title>', '<title>' + CFG['title'] + ' - 全国助残岗位信息平台</title>')
+    text = text.replace('<meta name="apple-mobile-web-app-title" content="行隅">', '<meta name="apple-mobile-web-app-title" content="' + CFG['name'] + '">')
+    text = text.replace('行隅 · 心智障碍就业导航正式上线', CFG['title'] + '正式上线')
+    text = text.replace('© 2026 行隅 · 心智障碍就业导航 · 原创开发', '© 2026 ' + CFG['title'] + ' · 原创开发')
+    # 关于页与免责声明
+    text = text.replace('行隅为<strong>原创项目</strong>', CFG['name'] + '为<strong>原创项目</strong>')
+    text = text.replace('行隅为<strong>公益性信息导航平台</strong>', CFG['name'] + '为<strong>公益性信息导航平台</strong>')
+    text = text.replace('「行隅」是', '「' + CFG['name'] + '」是')
+    # 分享 / 导出 / JS 内品牌
+    text = text.replace('分享「行隅」', '分享「' + CFG['name'] + '」')
+    text = text.replace('【行隅·岗位推荐】', '【' + CFG['name'] + '·岗位推荐】')
+    text = text.replace('来自「行隅」', '来自「' + CFG['name'] + '」')
+    text = text.replace("title: '行隅·岗位推荐'", "title: '" + CFG['name'] + '·岗位推荐' + "'")
+    text = text.replace('<h1>行隅 · 岗位清单</h1>', '<h1>' + CFG['name'] + ' · 岗位清单</h1>')
+    # 邮件与分享链接
+    text = text.replace('subject=行隅投稿', 'subject=' + CFG['mail_pre'] + '投稿')
+    text = text.replace('subject=行隅合作', 'subject=' + CFG['mail_pre'] + '合作')
+    text = text.replace('subject=行隅信息纠错%2F举报', 'subject=' + CFG['mail_pre'] + '信息纠错%2F举报')
+    text = text.replace('subject=行隅岗位举报：', 'subject=' + CFG['mail_pre'] + '岗位举报：')
+    text = text.replace('subject=行隅企业招聘登记', 'subject=' + CFG['mail_pre'] + '企业招聘登记')
+    text = text.replace('title=行隅·', 'title=' + CFG['name'] + '·')
+    text = text.replace('data=https%3A%2F%2Fjames-liang-o.github.io%2Fxingyu-jobs%2F', 'data=https%3A%2F%2Fjames-liang-o.github.io%2F' + CFG['share'] + '%2F')
+    text = text.replace('url=https%3A%2F%2Fjames-liang-o.github.io%2Fxingyu-jobs%2F', 'url=https%3A%2F%2Fjames-liang-o.github.io%2F' + CFG['share'] + '%2F')
+    return text
+
+HTML_DOC = _sitep(HTML_DOC)
+
+# 友站区（页面最底部跳转区）：三站互链，每站一句话介绍
+FRIEND = '''
+<div class="friend-sites">
+  <div class="fs-title">行隅系列 · 互助友站</div>
+  <div class="fs-row">
+    <a class="fs-card" href="https://james-liang-o.github.io/xingyu-jobs/" target="_blank" rel="noopener">
+      <b>行隅</b><span>心智障碍就业导航</span><i>面向心智障碍人群</i>
+    </a>
+    <a class="fs-card" href="https://james-liang-o.github.io/xingyu-mental/" target="_blank" rel="noopener">
+      <b>心行</b><span>精神障碍就业导航</span><i>面向精神障碍人群</i>
+    </a>
+    <a class="fs-card" href="https://james-liang-o.github.io/xingyu-physical/" target="_blank" rel="noopener">
+      <b>健行</b><span>身体残疾就业导航</span><i>面向身体残疾人群</i>
+    </a>
+  </div>
+</div>
+<style>
+.friend-sites{max-width:960px;margin:18px auto 6px;padding:16px 16px 20px;background:var(--card,#fff);border-radius:14px;border:1px solid var(--line,#e8ecf4)}
+.fs-title{font-size:15px;font-weight:800;margin-bottom:12px;color:var(--txt,#1c2333)}
+.fs-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fs-card{display:flex;flex-direction:column;gap:3px;padding:12px;border:1px solid var(--line,#e8ecf4);border-radius:10px;text-decoration:none;background:var(--bg,#f7f9fc)}
+.fs-card b{font-size:16px;color:#2B6DE8}
+.fs-card span{font-size:13px;color:var(--txt,#1c2333);font-weight:600}
+.fs-card i{font-size:11px;color:var(--sub,#8a94a6);font-style:normal}
+.fs-card.current{opacity:.62;pointer-events:none}
+@media(max-width:600px){.fs-row{grid-template-columns:1fr}}
+</style>
+'''
+FRIEND = FRIEND.replace('fs-card" href', 'fs-card' + (' current' if SITE != 'mh' else '') + '" href') if False else FRIEND
+# 标记当前站
+cur_links = {'mh': 'xingyu-jobs', 'mental': 'xingyu-mental', 'physical': 'xingyu-physical'}
+cur_rep = '<a class="fs-card" href="https://james-liang-o.github.io/' + cur_links[SITE] + '/"'
+FRIEND = FRIEND.replace('<a class="fs-card" href="https://james-liang-o.github.io/' + cur_links[SITE] + '/"', '<a class="fs-card current" href="https://james-liang-o.github.io/' + cur_links[SITE] + '/"')
+HTML_DOC = HTML_DOC.replace('</body>', FRIEND + '\n</body>')
+
+# 贴吧社区横幅：按站渲染（physical 站无贴吧，整块移除）
+_tb = TIEBA.get(SITE)
+if _tb:
+    _tb_html = ('<div class="tieba-banner" onclick="window.open(\'' + _tb['url'] + '\',\'_blank\',\'noopener\')">\n'
+                '  <div class="tb-left">\n'
+                '    <div class="tb-badge">' + _tb['badge'] + '</div>\n'
+                '    <div class="tb-title">' + _tb['title'] + '</div>\n'
+                '    <div class="tb-sub">' + _tb['sub'] + '</div>\n'
+                '  </div>\n'
+                '  <div class="tb-go">前往 ›</div>\n'
+                '</div>')
+else:
+    _tb_html = ''
+HTML_DOC = HTML_DOC.replace('__TIEBA_BANNER__', _tb_html)
+
+out = os.path.join(BASE, CFG['out'])
 with open(out, 'w', encoding='utf-8') as f:
     f.write(HTML_DOC)
 print('written:', out, len(HTML_DOC), 'bytes')
