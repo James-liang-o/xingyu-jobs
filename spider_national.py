@@ -188,7 +188,7 @@ def fetch_prov_api(host, pages=3):
             dis_list = rec.get('distype') or []
             dis_types = [d.get('disType', '') for d in dis_list if isinstance(d, dict)]
             dis_str = rec.get('distypeStr', '') or ''
-            is_mh = ('智力残疾' in dis_str or '精神残疾' in dis_str or '智力残疾' in dis_types or '精神残疾' in dis_types)
+            is_mh = ('智力残疾' in dis_str or '智力残疾' in dis_types or '智力障碍' in dis_str or '发育障碍' in dis_str or '智力障碍' in dis_types or '发育障碍' in dis_types)
             is_mental = ('精神残疾' in dis_str or '精神残疾' in dis_types)
             is_physical = any(k in dis_str or k in dis_types for k in ['肢体残疾', '视力残疾', '听力残疾', '言语残疾'])
             jobs.append({
@@ -241,7 +241,7 @@ def fetch_national_api(pages=60, page_size=500):
             dis_list = rec.get('distype') or []
             dis_types = [d.get('disType', '') for d in dis_list if isinstance(d, dict)]
             dis_str = rec.get('distypeStr', '') or ''
-            is_mh = ('智力残疾' in dis_str or '精神残疾' in dis_str or '智力残疾' in dis_types or '精神残疾' in dis_types)
+            is_mh = ('智力残疾' in dis_str or '智力残疾' in dis_types or '智力障碍' in dis_str or '发育障碍' in dis_str or '智力障碍' in dis_types or '发育障碍' in dis_types)
             is_mental = ('精神残疾' in dis_str or '精神残疾' in dis_types)
             is_physical = any(k in dis_str or k in dis_types for k in ['肢体残疾', '视力残疾', '听力残疾', '言语残疾'])
             # 时效字段：createTime 发布时间 / updateTime 更新时间 / endTime 招聘截止
