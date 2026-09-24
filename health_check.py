@@ -111,7 +111,7 @@ def main():
     print('发现 %d 个问题:' % len(problems))
     for p in problems:
         print(' -', p)
-    for wf in ('update-jobs.yml', 'update-articles.yml'):
+    for wf in ('update.yml', 'articles.yml'):
         dispatch(wf)
     if any('gen_page.py' in p for p in problems):
         open_issue('【行隅站点自检】代码生成异常，需人工查看', '\n'.join(problems))

@@ -1363,7 +1363,7 @@ function toggleSocFilter(){
   ensureAll(function(){ render(); });
   toast(socFilter ? '只看国企、央企、事业单位岗位' : '已显示全部岗位');
 }
-function saveFavs(){ try { localStorage.setItem('xy_favs', JSON.stringify(FAVS)); } catch(e){} document.getElementById('favCount').textContent = FAVS.length; }
+function saveFavs(){ try { localStorage.setItem('xy_favs', JSON.stringify(FAVS)); } catch(e){} var fc = document.getElementById('favCount'); if(fc) fc.textContent = FAVS.length; }
 function isFav(cd){ return cd && FAVS.indexOf(cd) >= 0; }
 function toggleFav(cd){
   if(!cd) return;
@@ -1481,10 +1481,15 @@ function visible(j){
       var want = kw.replace('心智', '');
       if(mhRange(j) !== want) return false;
     } else {
-      var s = (j.n+j.o+j.c+j.s+j.ds+j.dy).toLowerCase();
+      var s = (j.n+j.o+j.c+j.s+j.ds+j.dy+j.e).toLowerCase();
       var wl = kw.toLowerCase().split(/\s+/);
       for(var wi = 0; wi < wl.length; wi++){
-        if(wl[wi] && s.indexOf(wl[wi]) < 0) return false;
+        if(!wl[wi]) continue;
+        var alts = wl[wi].split('|'), hitOne = false;
+        for(var ai = 0; ai < alts.length; ai++){
+          if(alts[ai] && s.indexOf(alts[ai]) >= 0){ hitOne = true; break; }
+        }
+        if(!hitOne) return false;
       }
     }
   }
@@ -1730,7 +1735,7 @@ function toggleRecent(){
 
 // ===== 帮我找岗位：问答向导 =====
 var gStep = 0, gCity = '', gType = '', gShift = '', gEdu = '';
-var GUIDE_TYPES = [['生产制造','普工'],['餐饮服务','厨师'],['物流仓储','仓管'],['销售客服','销售'],['文职行政','文员'],['保洁绿化','保洁'],['不限','']];
+var GUIDE_TYPES = [['生产制造','普工|操作工|组装|包装|车间|制造'],['餐饮服务','厨师|后厨|餐饮|服务员|帮厨'],['物流仓储','仓管|仓库|物流|分拣|打包|快递'],['销售客服','销售|客服|电话|门店|营业员'],['文职行政','文员|行政|助理|文秘|办公'],['保洁绿化','保洁|清洁|绿化|环卫|家政'],['不限','']];
 function openGuide(){ gStep = 0; gCity = ''; gType = ''; gShift = ''; gEdu = ''; renderGuide(); document.getElementById('guideMask').style.display = 'flex'; }
 function closeGuide(){ document.getElementById('guideMask').style.display = 'none'; }
 function setGCity(c){ gCity = c; var inp = document.getElementById('gCityInp'); if(inp) inp.value = c; }
@@ -1766,18 +1771,45 @@ function guideNext(){
   applyGuide();
 }
 function applyGuide(){
-  selCities = gCity ? [gCity] : [];
+  // 城市名归一化：用户输入"上海"要能匹配到数据里的"上海市"
+  selCities = [];
+  if(gCity){
+    var q = String(gCity).replace(/[市省区县]$/, '');
+    for(var ci = 0; ci < CITIES.length; ci++){
+      var nm = String(CITIES[ci].name).replace(/[市省区县]$/, '');
+      if(nm === q || nm.indexOf(q) >= 0 || q.indexOf(nm) >= 0){ selCities.push(CITIES[ci].name); break; }
+    }
+    if(!selCities.length) selCities = [gCity];
+  }
   var words = [];
   for(var i = 0; i < GUIDE_TYPES.length; i++){ if(GUIDE_TYPES[i][0] === gType && GUIDE_TYPES[i][1]) words.push(GUIDE_TYPES[i][1]); }
-  if(gShift) words.push(gShift);
-  if(gEdu) words.push(gEdu);
+  if(gShift) words.push('长白班|白班|常白班');
+  if(gEdu){
+    var eduMap = {'初中':'初中|小学|不限','高中':'高中|初中|小学|不限','大专':'大专|高中|初中|小学|不限'};
+    words.push(eduMap[gEdu] || gEdu);
+  }
   kw = words.join(' ');
   closeGuide();
   recentOnly = false; var rb = document.getElementById('fpRecent'); if(rb) rb.classList.remove('on');
   curLetter = '全部'; shownMax = PAGE_SIZE;
   renderCities(); renderFilters();
-  ensureAll(function(){ render(); });
-  toast(gCity ? '已按「' + gCity + '」为你筛选岗位，可在顶部继续调整' : '已为你筛选岗位，可在顶部继续调整');
+  ensureAll(function(){
+    render();
+    var n = parseInt(document.getElementById('stShow').textContent || '0', 10) || 0;
+    if(n > 0){ toast(gCity ? '已按「' + gCity + '」为你筛选岗位，可在顶部继续调整' : '已为你筛选岗位，可在顶部继续调整'); return; }
+    // 兜底：条件太严筛不出结果时逐级放宽，避免出现空白页
+    kw = '';
+    var qi = document.getElementById('q'); if(qi) qi.value = '';
+    renderFilters(); render();
+    var n2 = parseInt(document.getElementById('stShow').textContent || '0', 10) || 0;
+    if(n2 === 0 && selCities.length){
+      selCities = [];
+      renderCities(); renderFilters(); render();
+      toast('该城市暂时没有匹配的岗位，已为你显示全部岗位');
+    } else {
+      toast('没有完全符合的岗位，已为你放宽条件（可在顶部继续调整）');
+    }
+  });
 }
 
 
