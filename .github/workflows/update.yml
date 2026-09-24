@@ -9,6 +9,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PAT: ${{ secrets.XINGYU_PAT }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,9 +35,7 @@ jobs:
           git diff --cached --quiet || git commit -m "auto update $(date +'%Y-%m-%d %H:%M')"
           git push
       - name: Push 心行 / 健行 友站
-        if: ${{ secrets.XINGYU_PAT != '' }}
-        env:
-          PAT: ${{ secrets.XINGYU_PAT }}
+        if: env.PAT != ''
         run: |
           git config --global user.name "xingyu-bot"
           git config --global user.email "xingyu-bot@users.noreply.github.com"
