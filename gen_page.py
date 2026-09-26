@@ -472,16 +472,16 @@ HTML_DOC = """<!DOCTYPE html>
   .adbar .adbody{flex:1;font-size:13px;color:var(--text)}
   .adbar a{color:var(--primary);text-decoration:none;font-weight:600}
   .adbar .adempty{color:#9CA3AF;font-size:12px}
-  /* 寻亲轮播（纯展示，不可点击） */
-  .missbar{display:flex;align-items:center;gap:10px;overflow:hidden;width:100%}
+  /* 寻亲轮播（纯展示横幅，不可点击；每次进入随机10条，慢速滚动，不撑高页面） */
+  .missbar{display:flex;align-items:center;gap:10px;overflow:hidden;width:100%;height:64px}
   .miss-tag{flex:0 0 auto;background:var(--primary);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600}
-  .miss-track{display:flex;gap:16px;animation:missroll 45s linear infinite;min-width:max-content}
+  .miss-track{display:flex;gap:16px;align-items:center;animation:missroll 200s linear infinite;min-width:max-content;height:64px}
   .missbar:hover .miss-track{animation-play-state:paused}
-  .miss-card{display:flex;align-items:center;gap:8px;flex:0 0 auto;cursor:default}
-  .miss-ph{width:34px;height:42px;object-fit:cover;border-radius:6px;background:#eee;flex:0 0 auto}
-  .miss-txt{display:flex;flex-direction:column;line-height:1.25}
-  .miss-txt b{color:var(--text);font-size:13px;font-weight:600}
-  .miss-txt span{color:var(--sub);font-size:11px}
+  .miss-card{display:flex;align-items:center;gap:8px;flex:0 0 auto;cursor:default;height:56px}
+  .miss-ph{width:40px;height:50px;object-fit:cover;border-radius:6px;background:#eee;flex:0 0 auto;border:1px solid var(--line)}
+  .miss-txt{display:flex;flex-direction:column;line-height:1.3;max-width:170px;overflow:hidden}
+  .miss-txt b{color:var(--text);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .miss-txt span{color:var(--sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   @keyframes missroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
   @media(prefers-reduced-motion:reduce){.miss-track{animation:none}}
   /* 城市折叠切换条 */
@@ -1033,13 +1033,19 @@ var ADS = {"top": [], "bottom": []};
 var MISSING_ROWS = __MISSING_ROWS__;
 function missBarHTML(){
   if(!MISSING_ROWS || !MISSING_ROWS.length) return '';
+  // 每次进入随机洗牌，只展示10条
+  var pool = MISSING_ROWS.slice();
+  for(var i = pool.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+  }
   var one = '';
-  MISSING_ROWS.forEach(function(r){
+  pool.slice(0, 10).forEach(function(r){
     one += '<div class="miss-card">'
       + '<img class="miss-ph" src="missing_imgs/' + esc(r.i) + '.jpg" alt="" loading="lazy" onerror="this.remove()">'
       + '<div class="miss-txt"><b>' + esc(r.n) + '</b>'
-      + (r.p ? '<span>' + esc(r.p) + '</span>' : '')
-      + '<span>' + esc(r.m) + '年失踪 · ' + esc(r.k) + '</span></div>'
+      + (r.p ? '<span>' + esc(r.p) + '</span>' : '<span>地点不详</span>')
+      + '<span>' + (r.m && r.m !== '？' ? esc(r.m) + '年失踪 · ' : '') + esc(r.k) + '</span></div>'
       + '</div>';
   });
   return '<div class="missbar" title="寻亲信息来自宝贝回家寻子网 · 如发现线索请拨打110"><span class="miss-tag">寻亲</span><div class="miss-track">' + one + one + '</div></div>';
