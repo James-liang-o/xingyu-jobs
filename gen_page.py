@@ -642,6 +642,7 @@ HTML_DOC = """<!DOCTYPE html>
   <div class="meta">数据更新：__UPDATED__ · 共 __TOTAL__ 条岗位 · __CITIES__ 个城市</div>
 </div>
 <div class="adbar"><span class="adlabel">广告位</span><div class="adbody" id="adTop"></div></div>
+<div id="missAd"></div>
 <div class="notice" onclick="showAbout()">
   <span class="ntag">公告</span>
   <span class="ntxt">行隅 · 心智障碍就业导航正式上线：聚合全国 4000+ 可投岗位，帮助心智障碍青年实现就业。点击查看关于我们</span>
@@ -1054,7 +1055,7 @@ function missBarHTML(){
     pages.push(picked.slice(k, k + per));
   }
   var html = '<div class="missbar">'
-    + '<div class="miss-top"><span class="miss-ad">广告位</span><span class="miss-title">宝贝回家寻亲信息 · 纯展示 · 如发现线索请拨打110</span></div>'
+    + '<div class="miss-top"><span class="miss-ad">寻亲公益</span><span class="miss-title">宝贝回家寻亲信息 · 纯展示 · 如发现线索请拨打110</span></div>'
     + '<div class="miss-stage">'
     + '<div class="miss-pages" id="missPages">';
   pages.forEach(function(pg){
@@ -1122,11 +1123,14 @@ function renderAds(){
       el.innerHTML = '<span class="adempty">广告位 · 诚招爱心企业</span>';
     }
   }
-  // 顶部广告位：优先显示寻亲轮播（纯展示不跳转），无寻亲数据时回落普通广告
+  // 顶部广告位：保持原样（广告或占位小字）
   var adTopEl = document.getElementById('adTop');
-  if(adTopEl){
+  if(adTopEl){ fill('adTop', top); }
+  // 寻亲公益轮播：独立区块（纯展示不跳转），无数据时不显示
+  var missEl = document.getElementById('missAd');
+  if(missEl){
     var mh = missBarHTML();
-    if(mh){ adTopEl.innerHTML = mh; startMiss(); } else { fill('adTop', top); }
+    if(mh){ missEl.innerHTML = mh; startMiss(); }
   }
   fill('adBottom', bot);
 }
