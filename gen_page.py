@@ -473,18 +473,23 @@ HTML_DOC = """<!DOCTYPE html>
   .adbar .adbody{flex:1;font-size:13px;color:var(--text)}
   .adbar a{color:var(--primary);text-decoration:none;font-weight:600}
   .adbar .adempty{color:#9CA3AF;font-size:12px}
-  /* 寻亲轮播（纯展示横幅，不可点击；每次进入随机10条，慢速滚动，不撑高页面） */
-  .missbar{display:flex;align-items:center;gap:10px;overflow:hidden;width:100%;height:64px}
+  /* 寻亲轮播（分页展示横幅：顶部小标题+内容区+底部圆点；每3秒自动翻页，点击圆点切换不停止；纯展示不可点击） */
+  .missbar{display:flex;flex-direction:column;gap:6px;overflow:hidden;width:100%;background:linear-gradient(90deg,#fff5f5,#fff);border:1px solid #f3d9d9;border-radius:10px;padding:8px 12px}
+  .miss-top{display:flex;align-items:center;gap:8px;min-width:0}
   .miss-tag{flex:0 0 auto;background:var(--primary);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600}
-  .miss-track{display:flex;gap:16px;align-items:center;animation:missroll 200s linear infinite;min-width:max-content;height:64px}
-  .missbar:hover .miss-track{animation-play-state:paused}
-  .miss-card{display:flex;align-items:center;gap:8px;flex:0 0 auto;cursor:default;height:56px}
-  .miss-ph{width:40px;height:50px;object-fit:cover;border-radius:6px;background:#eee;flex:0 0 auto;border:1px solid var(--line)}
-  .miss-txt{display:flex;flex-direction:column;line-height:1.3;max-width:170px;overflow:hidden}
+  .miss-title{flex:1;font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .miss-stage{overflow:hidden;width:100%}
+  .miss-pages{display:flex;transition:transform .5s ease;will-change:transform}
+  .miss-page{display:flex;gap:14px;flex:0 0 100%;padding:2px 0}
+  .miss-card{display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:default}
+  .miss-ph{width:36px;height:44px;object-fit:cover;border-radius:6px;background:#eee;flex:0 0 auto;border:1px solid var(--line)}
+  .miss-txt{display:flex;flex-direction:column;line-height:1.3;min-width:0;flex:1}
   .miss-txt b{color:var(--text);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .miss-txt span{color:var(--sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  @keyframes missroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-  @media(prefers-reduced-motion:reduce){.miss-track{animation:none}}
+  .miss-dots{display:flex;gap:6px;justify-content:center;margin-top:2px}
+  .miss-dot{width:7px;height:7px;border-radius:50%;background:#d8deeb;cursor:pointer;border:none;padding:0;flex:0 0 auto}
+  .miss-dot.on{background:var(--primary)}
+  @media(prefers-reduced-motion:reduce){.miss-pages{transition:none}}
   /* 城市折叠切换条 */
   .citytoggle{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
   .citytoggle .ct{font-size:13px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:6px}
@@ -1034,22 +1039,70 @@ var ADS = {"top": [], "bottom": []};
 var MISSING_ROWS = __MISSING_ROWS__;
 function missBarHTML(){
   if(!MISSING_ROWS || !MISSING_ROWS.length) return '';
-  // 每次进入随机洗牌，只展示10条
+  // 每次进入随机洗牌，取30条分页展示（桌面每页5条、手机每页2条）
   var pool = MISSING_ROWS.slice();
   for(var i = pool.length - 1; i > 0; i--){
     var j = Math.floor(Math.random() * (i + 1));
     var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
   }
-  var one = '';
-  pool.slice(0, 10).forEach(function(r){
-    one += '<div class="miss-card">'
-      + '<img class="miss-ph" src="missing_imgs/' + esc(r.i) + '.jpg" alt="" loading="lazy" onerror="this.remove()">'
-      + '<div class="miss-txt"><b>' + esc(r.n) + '</b>'
-      + (r.p ? '<span>' + esc(r.p) + '</span>' : '<span>地点不详</span>')
-      + '<span>' + (r.m && r.m !== '？' ? esc(r.m) + '年失踪 · ' : '') + esc(r.k) + '</span></div>'
-      + '</div>';
+  var picked = pool.slice(0, 30);
+  var per = window.innerWidth < 640 ? 2 : 5;
+  var pages = [];
+  for(var k = 0; k < picked.length; k += per){
+    pages.push(picked.slice(k, k + per));
+  }
+  var html = '<div class="missbar">'
+    + '<div class="miss-top"><span class="miss-tag">寻亲</span><span class="miss-title">宝贝回家寻亲信息 · 纯展示 · 如发现线索请拨打110</span></div>'
+    + '<div class="miss-stage"><div class="miss-pages" id="missPages">';
+  pages.forEach(function(pg){
+    html += '<div class="miss-page">';
+    pg.forEach(function(r){
+      html += '<div class="miss-card">'
+        + '<img class="miss-ph" src="missing_imgs/' + esc(r.i) + '.jpg" alt="" loading="lazy" onerror="this.remove()">'
+        + '<div class="miss-txt"><b>' + esc(r.n) + '</b>'
+        + (r.p ? '<span>' + esc(r.p) + '</span>' : '<span>地点不详</span>')
+        + '<span>' + (r.m && r.m !== '？' ? esc(r.m) + '年失踪 · ' : '') + esc(r.k) + '</span></div>'
+        + '</div>';
+    });
+    html += '</div>';
   });
-  return '<div class="missbar" title="寻亲信息来自宝贝回家寻子网 · 如发现线索请拨打110"><span class="miss-tag">寻亲</span><div class="miss-track">' + one + one + '</div></div>';
+  html += '</div></div><div class="miss-dots">';
+  for(var d = 0; d < pages.length; d++){
+    html += '<span class="miss-dot' + (d === 0 ? ' on' : '') + '" data-i="' + d + '"></span>';
+  }
+  html += '</div></div>';
+  return html;
+}
+var _missTimer = null, _missIdx = 0, _missTotal = 0;
+function startMiss(){
+  var stage = document.getElementById('missPages');
+  if(!stage) return;
+  var dots = document.querySelectorAll('.miss-dot');
+  _missTotal = dots.length;
+  if(_missTotal <= 1) return;
+  function go(idx){
+    _missIdx = ((idx % _missTotal) + _missTotal) % _missTotal;
+    stage.style.transform = 'translateX(-' + (_missIdx * 100) + '%)';
+    for(var i = 0; i < dots.length; i++){ dots[i].classList.toggle('on', i === _missIdx); }
+  }
+  function play(){
+    clearInterval(_missTimer);
+    _missTimer = setInterval(function(){ go(_missIdx + 1); }, 3000);
+  }
+  // 点击圆点：跳转对应页，并继续自动播放（不停止）
+  for(var d = 0; d < dots.length; d++){
+    dots[d].onclick = function(){
+      go(+this.getAttribute('data-i'));
+      play();
+    };
+  }
+  // 鼠标悬停暂停，移开继续
+  var bar = document.querySelector('.missbar');
+  if(bar){
+    bar.onmouseenter = function(){ clearInterval(_missTimer); };
+    bar.onmouseleave = function(){ play(); };
+  }
+  play();
 }
 function renderAds(){
   var top = ADS.top || [], bot = ADS.bottom || [];
@@ -1066,7 +1119,7 @@ function renderAds(){
   var adTopEl = document.getElementById('adTop');
   if(adTopEl){
     var mh = missBarHTML();
-    if(mh){ adTopEl.innerHTML = mh; } else { fill('adTop', top); }
+    if(mh){ adTopEl.innerHTML = mh; startMiss(); } else { fill('adTop', top); }
   }
   fill('adBottom', bot);
 }
