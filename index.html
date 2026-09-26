@@ -253,19 +253,22 @@
   .adbar .adbody{flex:1;font-size:13px;color:var(--text)}
   .adbar a{color:var(--primary);text-decoration:none;font-weight:600}
   .adbar .adempty{color:#9CA3AF;font-size:12px}
-  /* 寻亲轮播（分页展示横幅：顶部小标题+内容区+底部圆点；每3秒自动翻页，点击圆点切换不停止；纯展示不可点击） */
+  /* 寻亲轮播（分页展示横幅：顶部"广告位"小字+内容区+底部圆点；每6秒自动翻页，可左右手动切换；纯展示不可点击） */
   .missbar{display:flex;flex-direction:column;gap:6px;overflow:hidden;width:100%;background:linear-gradient(90deg,#fff5f5,#fff);border:1px solid #f3d9d9;border-radius:10px;padding:8px 12px}
   .miss-top{display:flex;align-items:center;gap:8px;min-width:0}
   .miss-tag{flex:0 0 auto;background:var(--primary);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600}
   .miss-title{flex:1;font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-  .miss-stage{overflow:hidden;width:100%}
+  .miss-stage{overflow:hidden;width:100%;position:relative}
   .miss-pages{display:flex;transition:transform .5s ease;will-change:transform}
   .miss-page{display:flex;gap:14px;flex:0 0 100%;padding:2px 0}
-  .miss-card{display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:default}
-  .miss-ph{width:36px;height:44px;object-fit:cover;border-radius:6px;background:#eee;flex:0 0 auto;border:1px solid var(--line)}
-  .miss-txt{display:flex;flex-direction:column;line-height:1.3;min-width:0;flex:1}
-  .miss-txt b{color:var(--text);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .miss-txt span{color:var(--sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .miss-card{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:default}
+  .miss-ph{width:48px;height:60px;object-fit:cover;border-radius:8px;background:#eee;flex:0 0 auto;border:1px solid var(--line)}
+  .miss-txt{display:flex;flex-direction:column;line-height:1.35;min-width:0;flex:1}
+  .miss-txt b{color:var(--text);font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .miss-txt span{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .miss-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.92);border:1px solid var(--line);color:var(--primary);font-size:16px;line-height:24px;text-align:center;cursor:pointer;user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .miss-prev{left:0}
+  .miss-next{right:0}
   .miss-dots{display:flex;gap:6px;justify-content:center;margin-top:2px}
   .miss-dot{width:7px;height:7px;border-radius:50%;background:#d8deeb;cursor:pointer;border:none;padding:0;flex:0 0 auto}
   .miss-dot.on{background:var(--primary)}
@@ -839,8 +842,10 @@ function missBarHTML(){
     pages.push(picked.slice(k, k + per));
   }
   var html = '<div class="missbar">'
-    + '<div class="miss-top"><span class="miss-tag">寻亲</span><span class="miss-title">宝贝回家寻亲信息 · 纯展示 · 如发现线索请拨打110</span></div>'
-    + '<div class="miss-stage"><div class="miss-pages" id="missPages">';
+    + '<div class="miss-top"><span class="miss-tag">广告位</span><span class="miss-title">宝贝回家寻亲信息 · 纯展示 · 如发现线索请拨打110</span></div>'
+    + '<div class="miss-stage">'
+    + '<span class="miss-arrow miss-prev">‹</span>'
+    + '<div class="miss-pages" id="missPages">';
   pages.forEach(function(pg){
     html += '<div class="miss-page">';
     pg.forEach(function(r){
@@ -853,7 +858,7 @@ function missBarHTML(){
     });
     html += '</div>';
   });
-  html += '</div></div><div class="miss-dots">';
+  html += '</div></div><span class="miss-arrow miss-next">›</span></div><div class="miss-dots">';
   for(var d = 0; d < pages.length; d++){
     html += '<span class="miss-dot' + (d === 0 ? ' on' : '') + '" data-i="' + d + '"></span>';
   }
@@ -874,7 +879,7 @@ function startMiss(){
   }
   function play(){
     clearInterval(_missTimer);
-    _missTimer = setInterval(function(){ go(_missIdx + 1); }, 3000);
+    _missTimer = setInterval(function(){ go(_missIdx + 1); }, 6000);
   }
   // 点击圆点：跳转对应页，并继续自动播放（不停止）
   for(var d = 0; d < dots.length; d++){
@@ -883,6 +888,10 @@ function startMiss(){
       play();
     };
   }
+  // 左右箭头：手动上一页/下一页，并继续自动播放（可往回滑）
+  var prev = document.querySelector('.miss-prev'), next = document.querySelector('.miss-next');
+  if(prev){ prev.onclick = function(e){ e.stopPropagation(); go(_missIdx - 1); play(); }; }
+  if(next){ next.onclick = function(e){ e.stopPropagation(); go(_missIdx + 1); play(); }; }
   // 鼠标悬停暂停，移开继续
   var bar = document.querySelector('.missbar');
   if(bar){
