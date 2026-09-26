@@ -473,16 +473,18 @@ HTML_DOC = """<!DOCTYPE html>
   .adbar .adbody{flex:1;font-size:13px;color:var(--text)}
   .adbar a{color:var(--primary);text-decoration:none;font-weight:600}
   .adbar .adempty{color:#9CA3AF;font-size:12px}
-  /* 寻亲轮播（分页展示横幅：顶部灰色"广告位"小字+内容区+底部圆点/左右箭头；每6秒自动翻页；纯展示不可点击） */
+  /* 寻亲封面流（中间一张清晰居中，两侧上一张/下一张暗处理；每6秒切换；纯展示不可点击） */
   .missbar{display:flex;flex-direction:column;gap:6px;overflow:hidden;width:100%;background:linear-gradient(90deg,#fff5f5,#fff);border:1px solid #f3d9d9;border-radius:10px;padding:8px 12px}
   .miss-top{display:flex;align-items:center;gap:8px;min-width:0}
   .miss-ad{flex:0 0 auto;color:#9CA3AF;font-size:12px;font-weight:400;white-space:nowrap}
   .miss-title{flex:1;font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .miss-stage{overflow:hidden;width:100%}
-  .miss-pages{display:flex;transition:transform .5s ease;will-change:transform}
-  .miss-page{display:flex;gap:14px;flex:0 0 100%;padding:2px 0}
-  .miss-card{display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:default}
-  .miss-ph{width:64px;height:80px;object-fit:cover;border-radius:8px;background:#eee;flex:0 0 auto;border:1px solid var(--line)}
+  .miss-pages{display:flex;align-items:center;transition:transform .5s ease;will-change:transform}
+  .miss-card{flex:0 0 60%;margin:0 2%;display:flex;align-items:center;gap:12px;cursor:default;transition:transform .5s ease,opacity .5s ease,filter .5s ease}
+  .miss-card.center{transform:scale(1);opacity:1;filter:none}
+  .miss-card.side{transform:scale(.85);opacity:.45;filter:blur(1.5px)}
+  .miss-card.hidden{transform:scale(.85);opacity:0;filter:blur(3px);pointer-events:none}
+  .miss-ph{width:72px;height:90px;object-fit:cover;border-radius:8px;background:#eee;flex:0 0 auto;border:1px solid var(--line)}
   .miss-txt{display:flex;flex-direction:column;line-height:1.4;min-width:0;flex:1}
   .miss-txt b{color:var(--text);font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .miss-txt span{color:var(--sub);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1042,36 +1044,27 @@ var ADS = {"top": [], "bottom": []};
 var MISSING_ROWS = __MISSING_ROWS__;
 function missBarHTML(){
   if(!MISSING_ROWS || !MISSING_ROWS.length) return '';
-  // 每次进入随机洗牌，取30条分页展示（桌面每页5条、手机每页2条）
+  // 每次进入随机洗牌，取10条封面流展示
   var pool = MISSING_ROWS.slice();
   for(var i = pool.length - 1; i > 0; i--){
     var j = Math.floor(Math.random() * (i + 1));
     var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
   }
-  var picked = pool.slice(0, 30);
-  var per = window.innerWidth < 640 ? 2 : 5;
-  var pages = [];
-  for(var k = 0; k < picked.length; k += per){
-    pages.push(picked.slice(k, k + per));
-  }
+  var picked = pool.slice(0, 10);
   var html = '<div class="missbar">'
     + '<div class="miss-top"><span class="miss-ad">寻亲公益</span><span class="miss-title">宝贝回家寻亲信息 · 纯展示 · 如发现线索请拨打110</span></div>'
     + '<div class="miss-stage">'
     + '<div class="miss-pages" id="missPages">';
-  pages.forEach(function(pg){
-    html += '<div class="miss-page">';
-    pg.forEach(function(r){
-      html += '<div class="miss-card">'
-        + '<img class="miss-ph" src="missing_imgs/' + esc(r.i) + '.jpg" alt="" loading="lazy" onerror="this.remove()">'
-        + '<div class="miss-txt"><b>' + esc(r.n) + '</b>'
-        + (r.p ? '<span>' + esc(r.p) + '</span>' : '<span>地点不详</span>')
-        + '<span>' + (r.m && r.m !== '？' ? esc(r.m) + '年失踪 · ' : '') + esc(r.k) + '</span></div>'
-        + '</div>';
-    });
-    html += '</div>';
+  picked.forEach(function(r){
+    html += '<div class="miss-card">'
+      + '<img class="miss-ph" src="missing_imgs/' + esc(r.i) + '.jpg" alt="" loading="lazy" onerror="this.remove()">'
+      + '<div class="miss-txt"><b>' + esc(r.n) + '</b>'
+      + (r.p ? '<span>' + esc(r.p) + '</span>' : '<span>地点不详</span>')
+      + '<span>' + (r.m && r.m !== '？' ? esc(r.m) + '年失踪 · ' : '') + esc(r.k) + '</span></div>'
+      + '</div>';
   });
   html += '</div></div><div class="miss-dots"><span class="miss-arrow miss-prev">‹</span><span class="miss-dots-inner">';
-  for(var d = 0; d < pages.length; d++){
+  for(var d = 0; d < picked.length; d++){
     html += '<span class="miss-dot' + (d === 0 ? ' on' : '') + '" data-i="' + d + '"></span>';
   }
   html += '</span><span class="miss-arrow miss-next">›</span></div></div>';
@@ -1079,37 +1072,55 @@ function missBarHTML(){
 }
 var _missTimer = null, _missIdx = 0, _missTotal = 0;
 function startMiss(){
-  var stage = document.getElementById('missPages');
-  if(!stage) return;
-  var dots = document.querySelectorAll('.miss-dot');
-  _missTotal = dots.length;
-  if(_missTotal <= 1) return;
+  var track = document.getElementById('missPages');
+  if(!track) return;
+  var dots = document.querySelectorAll('#missAd .miss-dot');
+  var cards = track.querySelectorAll('.miss-card');
+  _missTotal = cards.length;
+  if(!_missTotal) return;
+  // 封面流布局：当前卡片居中放大清晰，两侧缩小+模糊+半透明
+  function layout(){
+    var stage = track.parentNode;
+    var W = stage.clientWidth || 600;
+    var cw = W * 0.6;
+    var step = cw + W * 0.04;
+    var off = (W - cw) / 2;
+    track.style.transform = 'translateX(' + (off - _missIdx * step) + 'px)';
+    for(var c = 0; c < cards.length; c++){
+      var d = Math.abs(c - _missIdx);
+      cards[c].classList.toggle('center', d === 0);
+      cards[c].classList.toggle('side', d === 1);
+      cards[c].classList.toggle('hidden', d > 1);
+    }
+  }
   function go(idx){
     _missIdx = ((idx % _missTotal) + _missTotal) % _missTotal;
-    stage.style.transform = 'translateX(-' + (_missIdx * 100) + '%)';
+    layout();
     for(var i = 0; i < dots.length; i++){ dots[i].classList.toggle('on', i === _missIdx); }
   }
   function play(){
     clearInterval(_missTimer);
     _missTimer = setInterval(function(){ go(_missIdx + 1); }, 6000);
   }
-  // 点击圆点：跳转对应页，并继续自动播放（不停止）
+  // 点击圆点：跳到对应张，并继续自动播放（不停止）
   for(var d = 0; d < dots.length; d++){
     dots[d].onclick = function(){
       go(+this.getAttribute('data-i'));
       play();
     };
   }
-  // 左右箭头：手动上一页/下一页，并继续自动播放（可往回滑）
-  var prev = document.querySelector('.miss-prev'), next = document.querySelector('.miss-next');
+  // 左右箭头：手动上一张/下一张，并继续自动播放（可往回滑）
+  var prev = document.querySelector('#missAd .miss-prev'), next = document.querySelector('#missAd .miss-next');
   if(prev){ prev.onclick = function(e){ e.stopPropagation(); go(_missIdx - 1); play(); }; }
   if(next){ next.onclick = function(e){ e.stopPropagation(); go(_missIdx + 1); play(); }; }
-  // 鼠标悬停暂停，移开继续
-  var bar = document.querySelector('.missbar');
+  // 鼠标悬停暂停，移开继续；窗口缩放重排
+  var bar = document.querySelector('#missAd .missbar');
   if(bar){
     bar.onmouseenter = function(){ clearInterval(_missTimer); };
     bar.onmouseleave = function(){ play(); };
   }
+  window.addEventListener('resize', layout);
+  layout();
   play();
 }
 function renderAds(){
