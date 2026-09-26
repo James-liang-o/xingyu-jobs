@@ -472,6 +472,18 @@ HTML_DOC = """<!DOCTYPE html>
   .adbar .adbody{flex:1;font-size:13px;color:var(--text)}
   .adbar a{color:var(--primary);text-decoration:none;font-weight:600}
   .adbar .adempty{color:#9CA3AF;font-size:12px}
+  /* 寻亲轮播（纯展示，不可点击） */
+  .missbar{display:flex;align-items:center;gap:10px;overflow:hidden;width:100%}
+  .miss-tag{flex:0 0 auto;background:var(--primary);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600}
+  .miss-track{display:flex;gap:16px;animation:missroll 45s linear infinite;min-width:max-content}
+  .missbar:hover .miss-track{animation-play-state:paused}
+  .miss-card{display:flex;align-items:center;gap:8px;flex:0 0 auto;cursor:default}
+  .miss-ph{width:34px;height:42px;object-fit:cover;border-radius:6px;background:#eee;flex:0 0 auto}
+  .miss-txt{display:flex;flex-direction:column;line-height:1.25}
+  .miss-txt b{color:var(--text);font-size:13px;font-weight:600}
+  .miss-txt span{color:var(--sub);font-size:11px}
+  @keyframes missroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+  @media(prefers-reduced-motion:reduce){.miss-track{animation:none}}
   /* 城市折叠切换条 */
   .citytoggle{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
   .citytoggle .ct{font-size:13px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:6px}
@@ -1017,6 +1029,21 @@ document.getElementById('list').addEventListener('click', function(ev){
 });
 // 广告位渲染
 var ADS = {"top": [], "bottom": []};
+// 失踪儿童寻亲轮播（纯展示，不可点击；数据来自宝贝回家公开寻亲信息）
+var MISSING_ROWS = __MISSING_ROWS__;
+function missBarHTML(){
+  if(!MISSING_ROWS || !MISSING_ROWS.length) return '';
+  var one = '';
+  MISSING_ROWS.forEach(function(r){
+    one += '<div class="miss-card">'
+      + '<img class="miss-ph" src="missing_imgs/' + esc(r.i) + '.jpg" alt="" loading="lazy" onerror="this.remove()">'
+      + '<div class="miss-txt"><b>' + esc(r.n) + '</b>'
+      + (r.p ? '<span>' + esc(r.p) + '</span>' : '')
+      + '<span>' + esc(r.m) + '年失踪 · ' + esc(r.k) + '</span></div>'
+      + '</div>';
+  });
+  return '<div class="missbar" title="寻亲信息来自宝贝回家寻子网 · 如发现线索请拨打110"><span class="miss-tag">寻亲</span><div class="miss-track">' + one + one + '</div></div>';
+}
 function renderAds(){
   var top = ADS.top || [], bot = ADS.bottom || [];
   function fill(id, list){
@@ -1028,7 +1055,13 @@ function renderAds(){
       el.innerHTML = '<span class="adempty">广告位 · 诚招爱心企业</span>';
     }
   }
-  fill('adTop', top); fill('adBottom', bot);
+  // 顶部广告位：优先显示寻亲轮播（纯展示不跳转），无寻亲数据时回落普通广告
+  var adTopEl = document.getElementById('adTop');
+  if(adTopEl){
+    var mh = missBarHTML();
+    if(mh){ adTopEl.innerHTML = mh; } else { fill('adTop', top); }
+  }
+  fill('adBottom', bot);
 }
 renderAds();
 
@@ -2126,12 +2159,35 @@ for key in COLS_KEYS:
     cols_data[key] = items
 js_cols = json.dumps(cols_data, ensure_ascii=False)
 
+# 失踪儿童寻亲轮播：优先 有照片 + 近一年失踪，不足则取 有照片 + 近一年注册；纯展示不跳转
+missing_feed = []
+_miss_path = os.path.join(BASE, 'missing.json')
+if os.path.exists(_miss_path):
+    try:
+        from datetime import date as _date
+        _md = json.load(open(_miss_path, encoding='utf-8'))
+        _fresh = [r for r in _md if r.get('photo') and r.get('fresh')]
+        if len(_fresh) < 5:
+            _fresh = [r for r in _md if r.get('photo') and r.get('reg') and (0 <= (_date.today() - _date(*map(int, str(r['reg'])[:10].split('-')))).days <= 366)]
+        _fresh.sort(key=lambda x: str(x.get('reg', '')), reverse=True)
+        for r in _fresh[:120]:
+            missing_feed.append({
+                'i': r.get('id', ''), 'n': r.get('name', ''),
+                'p': ((r.get('prov') or '') + (' ' + r.get('city', '') if r.get('city') else '')).strip(),
+                'm': str(r.get('miss_date') or '')[:4] or '？',
+                'k': r.get('cat', ''),
+            })
+    except Exception:
+        missing_feed = []
+js_missing = json.dumps(missing_feed, ensure_ascii=False)
+
 valid_cnt = sum(1 for j in js_rows if j.get('st') != 'expired')
 expired_cnt = total - valid_cnt
 HTML_DOC = HTML_DOC.replace('__UPDATED__', esc(updated_at)).replace('__TOTAL__', str(total)).replace('__VALID__', str(valid_cnt)).replace('__EXPIRED__', str(expired_cnt)).replace('__CITIES__', str(len(all_cities)))
 HTML_DOC = HTML_DOC.replace('__JS_CHUNK0__', js_chunk0).replace('__JS_CITIES__', js_cities)
 HTML_DOC = HTML_DOC.replace('__CHUNK_TOTAL__', str(chunk_total))
 HTML_DOC = HTML_DOC.replace('__COLS_DATA__', js_cols)
+HTML_DOC = HTML_DOC.replace('__MISSING_ROWS__', js_missing)
 # 所有权指纹注入
 HTML_DOC = HTML_DOC.replace('__OWN_HASH__', OWN_HASH)
 # 岗位总数占位符（meta 等处的 __TOTAL__ 由上方统一替换，此处兜底）
