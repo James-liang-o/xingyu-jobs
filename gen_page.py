@@ -1051,11 +1051,13 @@ function missBarHTML(){
     var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
   }
   var picked = pool.slice(0, 10);
+  // 首尾循环：前补最后一张、后补第一张，保证任何时刻当前张左右都有相邻卡片（左=最后一张、右=第二张）
+  var order = [picked[9]].concat(picked, [picked[0]]);
   var html = '<div class="missbar">'
     + '<div class="miss-top"><span class="miss-ad">寻亲公益</span><span class="miss-title">宝贝回家寻亲信息 · 纯展示 · 如发现线索请拨打110</span></div>'
     + '<div class="miss-stage">'
     + '<div class="miss-pages" id="missPages">';
-  picked.forEach(function(r){
+  order.forEach(function(r){
     html += '<div class="miss-card">'
       + '<img class="miss-ph" src="missing_imgs/' + esc(r.i) + '.jpg" alt="" loading="lazy" onerror="this.remove()">'
       + '<div class="miss-txt"><b>' + esc(r.n) + '</b>'
@@ -1076,18 +1078,21 @@ function startMiss(){
   if(!track) return;
   var dots = document.querySelectorAll('#missAd .miss-dot');
   var cards = track.querySelectorAll('.miss-card');
-  _missTotal = cards.length;
+  // 逻辑张数=10（首尾各补1张用于循环），物理位置起点=1
+  _missTotal = dots.length;
   if(!_missTotal) return;
-  // 封面流布局：当前卡片居中放大清晰，两侧缩小+模糊+半透明
+  var BASE = 1;
+  // 封面流布局：当前卡片在舞台正中放大清晰，两侧缩小+模糊+半透明（左=上一张、右=下一张）
   function layout(){
     var stage = track.parentNode;
     var W = stage.clientWidth || 600;
     var cw = W * 0.6;
     var step = cw + W * 0.04;
     var off = (W - cw) / 2;
-    track.style.transform = 'translateX(' + (off - _missIdx * step) + 'px)';
+    var pos = BASE + _missIdx;
+    track.style.transform = 'translateX(' + (off - pos * step) + 'px)';
     for(var c = 0; c < cards.length; c++){
-      var d = Math.abs(c - _missIdx);
+      var d = Math.abs(c - pos);
       cards[c].classList.toggle('center', d === 0);
       cards[c].classList.toggle('side', d === 1);
       cards[c].classList.toggle('hidden', d > 1);
