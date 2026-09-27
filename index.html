@@ -876,8 +876,9 @@ function startMiss(){
     var cw = W * 0.6;
     var step = cw + W * 0.04;
     var off = (W - cw) / 2;
+    var ml = W * 0.02; // 卡片自带左右 margin，定位需一并扣除
     var pos = BASE + _missIdx;
-    track.style.transform = 'translateX(' + (off - pos * step) + 'px)';
+    track.style.transform = 'translateX(' + (off - pos * step - ml) + 'px)';
     for(var c = 0; c < cards.length; c++){
       var d = Math.abs(c - pos);
       cards[c].classList.toggle('center', d === 0);
