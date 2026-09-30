@@ -9,7 +9,8 @@ REPO = os.environ.get('GITHUB_REPOSITORY', 'James-liang-o/xingyu-jobs')
 TOKEN = os.environ.get('GH_TOKEN', '') or os.environ.get('GITHUB_TOKEN', '')
 
 def fetch(url, timeout=40):
-    req = urllib.request.Request(url, headers={'User-Agent': 'xingyu-health/1.0'})
+    # Cache-Control: no-cache 强制绕过 GitHub Pages CDN 缓存，避免读到旧版页面误报
+    req = urllib.request.Request(url, headers={'User-Agent': 'xingyu-health/1.0', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache'})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.status, r.read().decode('utf-8', 'ignore')
 
