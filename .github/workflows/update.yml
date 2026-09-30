@@ -17,7 +17,9 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install xlrd requests
-      - run: python spider_national.py
+      - name: 爬取岗位（源不可达时不阻断，继续用旧数据生成）
+        run: |
+          python spider_national.py || echo "spider 未完成，继续用现有数据生成"
       - run: python gen_page.py
         env:
           OWN_KEY: ${{ secrets.XINGYU_OWN_KEY }}

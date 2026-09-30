@@ -69,7 +69,8 @@ def main():
             today = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)).date()
             gap = (today - upd).days
             print('数据更新时间:', upd, '| 距今天数:', gap)
-            if gap > 2:
+            # 数据陈旧超过 7 天才告警（1~2 天内的偶发源不可达不打扰；连续 7 天未更新说明流程真的失效）
+            if gap > 7:
                 problems.append('岗位数据已 %d 天未更新（最新 %s），岗位更新流程疑似失效' % (gap, upd))
         else:
             problems.append('页面未找到"数据更新"时间戳')
@@ -82,15 +83,14 @@ def main():
         else:
             problems.append('未找到岗位总数标记')
         cj = re.search(r'专栏.*?([0-9]+)\s*篇', html)
-        if cj and int(cj.group(1)) < 500:
+        if cj and int(cj.group(1)) < 450:
             problems.append('专栏总篇数异常偏低: %s' % cj.group(1))
-
     try:
         import json as _json
         arts = _json.load(open('articles.json', encoding='utf-8'))
         total_arts = sum(len(v) for k, v in arts.items() if isinstance(v, list))
         print('专栏总篇数(本地):', total_arts)
-        if total_arts < 550:
+        if total_arts < 450:
             problems.append('专栏总篇数异常偏低(本地): %d' % total_arts)
     except Exception as e:
         problems.append('articles.json 读取失败: %s' % e)

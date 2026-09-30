@@ -128,17 +128,23 @@ def parse_xls_roles(data):
 def fetch_hubei_api(pages=3):
     """爬湖北省残疾人求职招聘信息平台（官方公开接口）"""
     jobs = []
+    fail_streak = 0
     for p in range(1, pages + 1):
         try:
             q = urllib.parse.urlencode({'pageNum': p, 'size': 50})
             url = 'https://www.hbcjrjy.cn/prod-api/open/Jobhb/getLatestPositionList?' + q
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.hbcjrjy.cn/'})
-            with urllib.request.urlopen(req, timeout=30, context=CTX) as r:
+            with urllib.request.urlopen(req, timeout=15, context=CTX) as r:
                 body = json.loads(r.read().decode('utf-8', errors='ignore'))
         except Exception as e:
             print('  湖北API ERR page %d: %s' % (p, e))
-            time.sleep(2)
+            fail_streak += 1
+            if fail_streak >= 5:
+                print('  湖北源连续失败 %d 页，放弃该源' % fail_streak)
+                break
+            time.sleep(1)
             continue
+        fail_streak = 0
         recs = body.get('data') or []
         if not recs:
             break
@@ -165,16 +171,22 @@ def fetch_prov_api(host, pages=3):
     """爬省级残联就业平台（cdpee 同源系统，getHomeJob 接口）"""
     jobs = []
     base = host + '/api/app-jycy-job/getHomeJob'
+    fail_streak = 0
     for p in range(1, pages + 1):
         try:
             q = urllib.parse.urlencode({'pageNum': p, 'pageSize': 50})
             req = urllib.request.Request(base + '?' + q, headers={'User-Agent': 'Mozilla/5.0', 'Referer': host + '/'})
-            with urllib.request.urlopen(req, timeout=30, context=CTX) as r:
+            with urllib.request.urlopen(req, timeout=15, context=CTX) as r:
                 body = json.loads(r.read().decode('utf-8', errors='ignore'))
         except Exception as e:
             print('  省级API ERR %s page %d: %s' % (host, p, e))
-            time.sleep(2)
+            fail_streak += 1
+            if fail_streak >= 5:
+                print('  %s 源连续失败 %d 页，放弃该源' % (host, fail_streak))
+                break
+            time.sleep(1)
             continue
+        fail_streak = 0
         data = body.get('data') or {}
         recs = data.get('records', [])
         if not recs:
@@ -211,16 +223,22 @@ def fetch_national_api(pages=60, page_size=500):
     jobs = []
     base = 'https://www.cdpee.org.cn/api/app-jycy-job/querySearchJobInfo'
     seen_ids = set()
+    fail_streak = 0
     for p in range(1, pages + 1):
         try:
             q = urllib.parse.urlencode({'pageNum': p, 'pageSize': page_size})
             req = urllib.request.Request(base + '?' + q, headers=HDR)
-            with urllib.request.urlopen(req, timeout=30, context=CTX) as r:
+            with urllib.request.urlopen(req, timeout=15, context=CTX) as r:
                 body = json.loads(r.read().decode('utf-8', errors='ignore'))
         except Exception as e:
             print('  API ERR page %d: %s' % (p, e))
-            time.sleep(2)
+            fail_streak += 1
+            if fail_streak >= 5:
+                print('  全国源连续失败 %d 页，放弃该源（改用上次数据兜底）' % fail_streak)
+                break
+            time.sleep(1)
             continue
+        fail_streak = 0
         data = body.get('data') or {}
         recs = data.get('records', [])
         if not recs:
@@ -380,10 +398,19 @@ def main():
         })
 
     # ===== 增量归档：上一轮有、本轮未出现的岗位标记失效并保留 =====
+    # 保护：本轮新增岗位过少（<200）说明核心源几乎全挂（如海外服务器无法访问国内接口），
+    # 此时不做失效归档，保留上一轮 active 岗位兜底，避免全站岗位被误标"已失效"
     fresh = set()
     for j in jobs:
         if j.get('code'):
             fresh.add(str(j['code']))
+    if len(jobs) < 200 and prev:
+        keep = 0
+        for code, old in prev.items():
+            if old.get('status') != 'expired' and code not in fresh:
+                jobs.append(old)
+                keep += 1
+        print('核心源不可用（本轮仅 %d 条），保留上一轮 active 岗位 %d 条兜底，跳过失效归档' % (len(jobs) - keep, keep))
     expired = 0
     for code, old in prev.items():
         if code not in fresh:
