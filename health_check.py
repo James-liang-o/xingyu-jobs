@@ -53,6 +53,17 @@ def main():
     except Exception as e:
         problems.append('站点无法访问: %s' % e)
 
+    # 数据新鲜度用 GitHub raw 检查（始终是最新 commit，不受 Pages CDN 缓存影响）
+    # Pages URL 仍做可访问性/指纹检查
+    raw_html = ''
+    try:
+        raw_url = 'https://raw.githubusercontent.com/%s/main/行隅_全国岗位导航.html' % REPO
+        raw_html = fetch(raw_url)[1]
+        print('raw 页面字节:', len(raw_html))
+    except Exception as e:
+        print('raw 读取失败(用线上页面兜底):', e)
+    check_html = raw_html or html
+
     if st == 200 and html:
         if '行隅' not in html:
             problems.append('页面未含站点标识"行隅"')
@@ -64,18 +75,20 @@ def main():
             print('线上版本:', vm.group(1))
         else:
             problems.append('线上页面未找到版本号标记')
-        m = re.search(r'数据更新[:：]\s*([0-9]{4})-([0-9]{2})-([0-9]{2})', html)
+
+    if check_html:
+        m = re.search(r'数据更新[:：]\s*([0-9]{4})-([0-9]{2})-([0-9]{2})', check_html)
         if m:
             upd = datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
             today = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)).date()
             gap = (today - upd).days
-            print('数据更新时间:', upd, '| 距今天数:', gap)
+            print('数据更新时间(raw):', upd, '| 距今天数:', gap)
             # 数据陈旧超过 7 天才告警（1~2 天内的偶发源不可达不打扰；连续 7 天未更新说明流程真的失效）
             if gap > 7:
                 problems.append('岗位数据已 %d 天未更新（最新 %s），岗位更新流程疑似失效' % (gap, upd))
         else:
             problems.append('页面未找到"数据更新"时间戳')
-        tm = re.search(r'id="stTotal">\s*([0-9]+)', html)
+        tm = re.search(r'id="stTotal">\s*([0-9]+)', check_html)
         if tm:
             n = int(tm.group(1))
             print('岗位总数:', n)
