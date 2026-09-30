@@ -398,29 +398,32 @@ def main():
         })
 
     # ===== 增量归档：上一轮有、本轮未出现的岗位标记失效并保留 =====
-    # 保护：本轮新增岗位过少（<200）说明核心源几乎全挂（如海外服务器无法访问国内接口），
-    # 此时不做失效归档，保留上一轮 active 岗位兜底，避免全站岗位被误标"已失效"
+    # 保护：核心源（中国残联全国接口）失败时不做失效归档，
+    # 保留上一轮 active 岗位兜底，避免全国岗位被误标"已失效"（海外服务器访问国内接口常超时）
     fresh = set()
     for j in jobs:
         if j.get('code'):
             fresh.add(str(j['code']))
-    if len(jobs) < 200 and prev:
+    national_ok = len(api_jobs) >= 200
+    if not national_ok and prev:
         keep = 0
         for code, old in prev.items():
             if old.get('status') != 'expired' and code not in fresh:
                 jobs.append(old)
                 keep += 1
-        print('核心源不可用（本轮仅 %d 条），保留上一轮 active 岗位 %d 条兜底，跳过失效归档' % (len(jobs) - keep, keep))
-    expired = 0
-    for code, old in prev.items():
-        if code not in fresh:
-            old = dict(old)
-            old['status'] = 'expired'
-            old['name'] = (old.get('name') or '') + ('【已失效】' if '【已失效】' not in (old.get('name') or '') else '')
-            jobs.append(old)
-            expired += 1
-    if expired:
-        print('归档失效岗位:', expired, '条')
+        print('全国源不可用（本轮全国 %d 条），保留上一轮 active 岗位 %d 条兜底，跳过失效归档' % (len(api_jobs), keep))
+        expired = 0
+    else:
+        expired = 0
+        for code, old in prev.items():
+            if code not in fresh:
+                old = dict(old)
+                old['status'] = 'expired'
+                old['name'] = (old.get('name') or '') + ('【已失效】' if '【已失效】' not in (old.get('name') or '') else '')
+                jobs.append(old)
+                expired += 1
+        if expired:
+            print('归档失效岗位:', expired, '条')
 
     # 按城市分组（拼音首字母索引）
     city_map = {}
