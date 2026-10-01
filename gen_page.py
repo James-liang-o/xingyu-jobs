@@ -227,6 +227,7 @@ HTML_DOC = """<!DOCTYPE html>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#2B6DE8">
+<meta name="color-scheme" content="light dark">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -241,9 +242,37 @@ HTML_DOC = """<!DOCTYPE html>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234F46E5'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>行</text></svg>">
 <style>
   :root{
+    color-scheme: light dark;
     --primary:#4F46E5; --primary-dark:#3730A3; --primary-light:#818CF8; --primary-bg:#EEF2FF;
     --bg:#F4F5F7; --card:#FFFFFF; --text:#1F2937; --sub:#6B7280; --line:#E5E7EB;
     --warn:#DC2626; --ok:#059669; --ink:#1F2937;
+  }
+  /* 跟随系统深色（自动适配，避免微信/浏览器强制反色导致深浅倒置） */
+  @media (prefers-color-scheme: dark){
+    :root:not(.force-light){
+      --primary:#6366F1; --primary-dark:#818CF8; --primary-bg:#1E293B;
+      --bg:#0F172A; --card:#1E293B; --text:#F1F5F9; --sub:#94A3B8; --line:#334155; --ink:#F1F5F9;
+    }
+    :root:not(.force-light) .header{background:#1E293B}
+    :root:not(.force-light) .searchbar{background:#0F172A}
+    :root:not(.force-light) .letterbar{background:#1E293B;border-color:#334155}
+    :root:not(.force-light) .citytag{background:#1E293B}
+    :root:not(.force-light) .notice{background:#172554;border-color:#1E3A8A;color:#DBEAFE}
+    :root:not(.force-light) .tieba-banner{background:linear-gradient(135deg,#134E4A,#0F766E)}
+    :root:not(.force-light) .zone-big{background:#1E293B;border-color:#334155}
+    :root:not(.force-light) .zone-ico{background:linear-gradient(135deg,#6366F1,#818CF8)}
+    :root:not(.force-light) .col-big{background:#1E293B;border-color:#334155}
+    :root:not(.force-light) .disclaimer{background:#431407;border-color:#7C2D12;color:#FDBA74}
+    :root:not(.force-light) .disclaimer b{color:#FDBA74}
+    :root:not(.force-light) .dt-card{background:#1E293B}
+    :root:not(.force-light) .ap-card{background:#1E293B;border-color:#334155}
+    :root:not(.force-light) .adbar{background:#1E293B;border-color:#334155}
+    :root:not(.force-light) .empty{color:#94A3B8}
+    :root:not(.force-light) .site-footer{color:#94A3B8}
+    :root:not(.force-light) .fpanel, :root:not(.force-light) .setbox{background:#1E293B;border-color:#334155}
+    :root:not(.force-light) .fp-item, :root:not(.force-light) .sp-btn{background:#334155;border-color:#475569;color:#E2E8F0}
+    :root:not(.force-light) .fp-item.on{background:#6366F1;color:#fff}
+    :root:not(.force-light) .fp-item.on svg{stroke:#fff}
   }
   /* 深色模式（html.dark） */
   html.dark{
@@ -2171,7 +2200,7 @@ function setZoom(v){
 (function(){ try{ var v = parseInt(localStorage.getItem('xy_zoom'), 10); if(v) setZoom(v); }catch(e){} })();
 function resetAll(){
   setZoom(100);
-  document.documentElement.classList.remove('dark');
+  document.documentElement.classList.remove('dark', 'force-light');
   document.getElementById('darkBtn').classList.remove('on');
   document.body.classList.remove('minmode');
   document.getElementById('minBtn').classList.remove('on');
@@ -2179,13 +2208,40 @@ function resetAll(){
   if(reading){ try{ speechSynthesis.cancel(); }catch(e){} reading = false; var rbn = document.getElementById('readBtn'); rbn.classList.remove('on'); rbn.textContent = '朗读'; }
   toast('已恢复默认设置');
 }
-function toggleDark(){
-  var on = document.documentElement.classList.toggle('dark');
-  document.getElementById('darkBtn').classList.toggle('on', on);
-  try{ localStorage.setItem('xy_dark', on ? '1' : ''); }catch(e){}
-  toast(on ? '已开启深色模式' : '已关闭深色模式');
+function isActuallyDark(){
+  var el = document.documentElement;
+  if(el.classList.contains('force-light')) return false;
+  if(el.classList.contains('dark')) return true;
+  return !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
 }
-(function(){ try{ if(localStorage.getItem('xy_dark') === '1'){ document.documentElement.classList.add('dark'); document.getElementById('darkBtn').classList.add('on'); } }catch(e){} })();
+function setDarkBtn(isDark){
+  var b = document.getElementById('darkBtn'); if(!b) return;
+  b.classList.toggle('on', isDark);
+  b.textContent = isDark ? '浅色模式' : '深色模式';
+}
+function toggleDark(){
+  var nowDark = isActuallyDark();
+  if(nowDark){
+    // 当前深色 → 切换到浅色（并锁定，防止系统深色自动接管）
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('force-light');
+    try{ localStorage.setItem('xy_dark', '0'); }catch(e){}
+    toast('已关闭深色模式');
+  }else{
+    // 当前浅色 → 切换到深色
+    document.documentElement.classList.remove('force-light');
+    document.documentElement.classList.add('dark');
+    try{ localStorage.setItem('xy_dark', '1'); }catch(e){}
+    toast('已开启深色模式');
+  }
+  setDarkBtn(!nowDark);
+}
+(function(){ try{
+  var v = localStorage.getItem('xy_dark');
+  if(v === '1'){ document.documentElement.classList.add('dark'); }
+  else if(v === '0'){ document.documentElement.classList.add('force-light'); }
+  setDarkBtn(isActuallyDark());
+}catch(e){} })();
 var reading = false;
 function toggleRead(){
   if(reading){
