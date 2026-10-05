@@ -44,45 +44,67 @@ def open_issue(title, body):
     except Exception as e:
         print('创建 issue 失败:', e)
 
+def pages_build_status():
+    """查 GitHub Pages 最近一次部署状态：能发现"仓库已更新但线上没部署成功"的情况。
+    不读线上页面内容——raw/github.io 都有 CDN 缓存，读内容会误报（曾把 16 天前的缓存版当成线上版本）。"""
+    if not TOKEN:
+        return None
+    try:
+        req = urllib.request.Request('https://api.github.com/repos/%s/pages/builds/latest' % REPO,
+            headers={'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json',
+                     'User-Agent': 'xingyu-health'})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            d = json.load(r)
+        return d.get('status'), (d.get('error') or {}).get('message'), d.get('created_at')
+    except Exception as e:
+        print('Pages 部署状态查询失败:', e)
+        return None
+
 def main():
     problems = []
+    # 1) 线上可访问性（只判状态码，不解析内容——内容有 CDN 缓存）
     st, html = 0, ''
     try:
         st, html = fetch(URL)
         print('线上状态: HTTP', st, '| 页面字节:', len(html))
     except Exception as e:
         problems.append('站点无法访问: %s' % e)
+    if st and st != 200:
+        problems.append('线上返回异常状态码: HTTP %s' % st)
 
-    # 数据新鲜度用 GitHub raw 检查（始终是最新 commit，不受 Pages CDN 缓存影响）
-    # Pages URL 仍做可访问性/指纹检查
-    raw_html = ''
-    try:
-        raw_url = 'https://raw.githubusercontent.com/%s/main/行隅_全国岗位导航.html' % REPO
-        raw_html = fetch(raw_url)[1]
-        print('raw 页面字节:', len(raw_html))
-    except Exception as e:
-        print('raw 读取失败(用线上页面兜底):', e)
-    check_html = raw_html or html
+    # 2) 数据新鲜度：读仓库本地 checkout 文件（与 main 分支一致，完全无 CDN 缓存干扰）
+    check_html = ''
+    for fn in ('行隅_全国岗位导航.html', 'index.html'):
+        if os.path.exists(fn):
+            check_html = open(fn, encoding='utf-8').read()
+            print('仓库页面文件:', fn, '| 字节:', len(check_html))
+            break
+    if not check_html:
+        problems.append('未找到仓库页面文件（行隅_全国岗位导航.html）')
 
-    if st == 200 and html:
-        if '行隅' not in html:
-            problems.append('页面未含站点标识"行隅"')
-        # 所有权指纹校验：线上页面必须保留唯一性标识（被篡改/替换会丢）
-        if 'xingyu-origin' not in html or '1049ddd7' not in html:
-            problems.append('线上页面丢失所有权指纹 xingyu-origin/1049ddd7，疑似被篡改或替换')
-        vm = re.search(r'class="ver">v?([0-9.]+)<', html)
-        if vm:
-            print('线上版本:', vm.group(1))
-        else:
-            problems.append('线上页面未找到版本号标记')
+    # 3) Pages 部署状态（仓库新但线上部署失败的情况）
+    pb = pages_build_status()
+    if pb:
+        pstatus, perr, pcreated = pb
+        print('Pages 最近部署:', pstatus, '|', pcreated)
+        if pstatus == 'errored':
+            problems.append('GitHub Pages 最近一次部署失败: %s' % (perr or '未知原因'))
 
     if check_html:
+        # 所有权指纹校验：页面必须保留唯一性标识（被篡改/替换会丢）
+        if 'xingyu-origin' not in check_html:
+            problems.append('页面丢失所有权指纹 xingyu-origin，疑似被篡改或替换')
+        vm = re.search(r'class="ver">v?([0-9.]+)<', check_html)
+        if vm:
+            print('页面版本:', vm.group(1))
+        else:
+            problems.append('页面未找到版本号标记')
         m = re.search(r'数据更新[:：]\s*([0-9]{4})-([0-9]{2})-([0-9]{2})', check_html)
         if m:
             upd = datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
             today = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)).date()
             gap = (today - upd).days
-            print('数据更新时间(raw):', upd, '| 距今天数:', gap)
+            print('数据更新时间(仓库):', upd, '| 距今天数:', gap)
             # 数据陈旧超过 7 天才告警（1~2 天内的偶发源不可达不打扰；连续 7 天未更新说明流程真的失效）
             if gap > 7:
                 problems.append('岗位数据已 %d 天未更新（最新 %s），岗位更新流程疑似失效' % (gap, upd))
@@ -96,7 +118,7 @@ def main():
                 problems.append('岗位总数异常偏低: %d' % n)
         else:
             problems.append('未找到岗位总数标记')
-        cj = re.search(r'专栏.*?([0-9]+)\s*篇', html)
+        cj = re.search(r'专栏.*?([0-9]+)\s*篇', check_html)
         if cj and int(cj.group(1)) < 450:
             problems.append('专栏总篇数异常偏低: %s' % cj.group(1))
     try:

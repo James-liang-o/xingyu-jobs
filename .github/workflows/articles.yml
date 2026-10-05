@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: xingyu-repo-push
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,7 +37,8 @@ jobs:
           git config user.email "xingyu-bot@users.noreply.github.com"
           git add -A
           git diff --cached --quiet || git commit -m "auto update articles $(date +'%Y-%m-%d %H:%M')"
-          git push
+          git pull --rebase --autostash -q || true
+          git push || { git pull --rebase --autostash -q && git push; }
       - name: Push 心行 / 健行 友站
         if: env.PAT != ''
         run: |
@@ -45,6 +50,6 @@ jobs:
             cp "$f" /tmp/$r/index.html
             cd /tmp/$r
             git add -A
-            git diff --cached --quiet || { git commit -m "auto update articles $(date +'%Y-%m-%d %H:%M')"; git push -q; }
+            git diff --cached --quiet || { git commit -m "auto update articles $(date +'%Y-%m-%d %H:%M')"; git pull --rebase --autostash -q || true; git push -q || { git pull --rebase --autostash -q && git push -q; }; }
             cd "$GITHUB_WORKSPACE"
           done
