@@ -1,6 +1,66 @@
 {
  "social": [
   {
+   "title": "新华社  中方爱心捐赠助力蒙古国残疾儿童康复事业",
+   "date": "2026-11-13",
+   "url": "https://www.cdpf.org.cn/ywpd/xcwh/mtjjxwb/3dae77895a4d44d98d28b92955e80fd7.htm",
+   "source": "中国残联·宣传文化",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "程凯出席第四期鲁迅文学院残疾人作家研修班“邀访·倾听”座谈会",
+   "date": "2026-11-12",
+   "url": "https://www.cdpf.org.cn/ywpd/xcwh/gzdt6/c568fd485610476cad811226c0d43076.htm",
+   "source": "中国残联·宣传文化",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "中国残联调研江苏残疾人文化工作",
+   "date": "2026-11-12",
+   "url": "https://www.cdpf.org.cn/ywpd/xcwh/gzdt6/2d56f73a62c14ea6b63fea6ee7d78483.htm",
+   "source": "中国残联·宣传文化",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "新华社｜苏妍斩获中国残疾人攀岩首个世界冠军",
+   "date": "2026-11-12",
+   "url": "https://www.cdpf.org.cn/ywpd/ty/gzdt8/6aed8e3470d846fda864b185f02ebfb9.htm",
+   "source": "中国残联·体育",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "《国家残疾预防行动计划（2026—2030年）》新闻发布会在京举行",
+   "date": "2026-10-30",
+   "url": "https://www.cdpf.org.cn/xwzx/clyw2/47aa883a194d41748094a3940bc992b6.htm",
+   "source": "中国残联·康复",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
    "title": "中国残联调研天津市残疾人体育工作",
    "date": "2026-09-14",
    "url": "https://www.cdpf.org.cn/ywpd/ty/gzdt8/7d980505fc404e468f4631ea745877ed.htm",
@@ -480,9 +540,9 @@
    ]
   },
   {
-   "title": "广东33名残疾人运动员出征第五届亚残运会",
+   "title": "“残健融合·共创未来”残疾人事业先进事迹宣讲暨艺术巡演走进佛山",
    "date": "",
-   "url": "https://www.gddpf.org.cn/xwzx/gzdt/content/post_1340327.html",
+   "url": "https://www.gddpf.org.cn/xwzx/gzdt/content/post_1340370.html",
    "source": "广东残联·新闻",
    "summary": "",
    "cr": [
@@ -492,9 +552,21 @@
    ]
   },
   {
-   "title": "“残健融合·共创未来”残疾人事业先进事迹宣讲暨艺术巡演走进佛山",
+   "title": "超2.4万人实现就业！惠州多措并举，精准助残促就业",
    "date": "",
-   "url": "https://www.gddpf.org.cn/xwzx/gzdt/content/post_1340370.html",
+   "url": "https://www.gddpf.org.cn/xwzx/dfdt/content/post_1343275.html",
+   "source": "广东残联·新闻",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "2026年广州市残疾人跨境电商二期训练班圆满结业",
+   "date": "",
+   "url": "https://www.gddpf.org.cn/xwzx/dfdt/content/post_1343227.html",
    "source": "广东残联·新闻",
    "summary": "",
    "cr": [
@@ -600,6 +672,124 @@
    ]
   },
   {
+   "title": "“巴蜀聚·弈同心”2026年川渝地区残疾人象棋围棋邀请赛在长寿开幕",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1565751554944212992/web/content_1565751554944212992.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "中国残疾人艺术团团长邰丽华做客“见字如面”，共话阅读照亮无声世界",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1564689791389863936/web/content_1564689791389863936.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "程凯赴浙江宣讲党的二十届五中全会精神并调研助残共富工作",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1570847811701239808/web/content_1570847811701239808.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "重庆市残疾人文化艺术空间今起开放 百幅佳作免费参观",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1552672082975617024/web/content_1552672082975617024.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "2026年度“交通银行残疾大学生励志奖学金”拟推报名单公示",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1565890711096201216/web/content_1565890711096201216.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "万盛经开区圆满完成2026年度精神残疾人医疗救助工作",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1570487951838621696/web/content_1570487951838621696.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental"
+   ]
+  },
+  {
+   "title": "黔江区残疾运动员在乐山市“体育复健进校园”川渝校际联赛中斩获佳绩",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1570129680065835008/web/content_1570129680065835008.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "榜样领航聚力量·残健共融逐梦行：残疾人先进事迹宣讲走进新田镇中学校",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1567908459955425280/web/content_1567908459955425280.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "从喊不出“妈妈”到考入清华，这个残疾姑娘活成了自己的光！",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1400197964852518912/web/content_1400197964852518912.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "广东33名残疾人运动员出征第五届亚残运会",
+   "date": "",
+   "url": "https://www.gddpf.org.cn/xwzx/gzdt/content/post_1340327.html",
+   "source": "广东残联·新闻",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
    "title": "残疾人福利基金会",
    "date": "",
    "url": "https://www.xjdpf.org.cn/ywgz/cjrfljjh.htm",
@@ -684,69 +874,9 @@
    ]
   },
   {
-   "title": "“巴蜀聚·弈同心”2026年川渝地区残疾人象棋围棋邀请赛在长寿开幕",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1565751554944212992/web/content_1565751554944212992.html",
-   "source": "重庆残联",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
-   "title": "中国残疾人艺术团团长邰丽华做客“见字如面”，共话阅读照亮无声世界",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1564689791389863936/web/content_1564689791389863936.html",
-   "source": "重庆残联",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
    "title": "全国残疾人教就工作会议在湖南长沙召开",
    "date": "",
    "url": "https://www.cqdpf.org.cn/web/article/1562885452349665280/web/content_1562885452349665280.html",
-   "source": "重庆残联",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
-   "title": "重庆市残疾人文化艺术空间今起开放 百幅佳作免费参观",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1552672082975617024/web/content_1552672082975617024.html",
-   "source": "重庆残联",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
-   "title": "2026年度“交通银行残疾大学生励志奖学金”拟推报名单公示",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1565890711096201216/web/content_1565890711096201216.html",
-   "source": "重庆残联",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
-   "title": "从喊不出“妈妈”到考入清华，这个残疾姑娘活成了自己的光！",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1400197964852518912/web/content_1400197964852518912.html",
    "source": "重庆残联",
    "summary": "",
    "cr": [
@@ -1274,6 +1404,18 @@
  ],
  "doing": [
   {
+   "title": "第16届辽宁省残疾人健身周匹克球推广活动在沈阳举办",
+   "date": "2026-11-12",
+   "url": "https://www.cdpf.org.cn/ywpd/ty/gzdt8/755b5a02c511406dbc46d296955e2b58.htm",
+   "source": "中国残联·体育",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
    "title": "中国残联关于第三次全国残疾人抽样调查全国模拟试点调查数据采集处理系统建设项目的采购结果公示",
    "date": "2026-09-21",
    "url": "https://www.cdpf.org.cn/zwgk/ggtz1/208d6dbe3a0f4ca49aa034b6cbd29c0a.htm",
@@ -1681,6 +1823,18 @@
    ]
   },
   {
+   "title": "淬炼宣传本领讲好惠残故事 2026年广东省残疾人宣传文化工作交流（湛江）活动举行",
+   "date": "",
+   "url": "https://www.gddpf.org.cn/xwzx/gzdt/content/post_1342980.html",
+   "source": "广东残联·新闻",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
    "title": "广东省残疾人公益基金会迎接第五届亚残运会广东运动员凯旋",
    "date": "",
    "url": "https://www.gddpf.org.cn/xwzx/zsdwjxhdt/content/post_1341595.html",
@@ -1696,6 +1850,18 @@
    "title": "广东省残疾人康复中心开展树立和践行正确政绩观专题党课",
    "date": "",
    "url": "https://www.gddpf.org.cn/xwzx/zsdwjxhdt/content/post_1340834.html",
+   "source": "广东残联·新闻",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "惠州博罗县积极开展上门残疾评定服务",
+   "date": "",
+   "url": "https://www.gddpf.org.cn/xwzx/dfdt/content/post_1342957.html",
    "source": "广东残联·新闻",
    "summary": "",
    "cr": [
@@ -2631,9 +2797,9 @@
    ]
   },
   {
-   "title": "家门口的“乒乓梦工厂”！清远市残疾人乒乓球训练基地正式揭牌",
+   "title": "广东举行残疾人毕业生专场招聘，68家企业现场招聘1100余人",
    "date": "",
-   "url": "https://www.gddpf.org.cn/xwzx/dfdt/content/post_1341962.html",
+   "url": "https://www.gddpf.org.cn/xwzx/mtgz/content/post_1342869.html",
    "source": "广东残联·新闻",
    "summary": "",
    "cr": [
@@ -2671,6 +2837,18 @@
    "date": "",
    "url": "https://www.cqdpf.org.cn/web/article/1513611247558303744/web/content_1513611247558303744.html",
    "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "家门口的“乒乓梦工厂”！清远市残疾人乒乓球训练基地正式揭牌",
+   "date": "",
+   "url": "https://www.gddpf.org.cn/xwzx/dfdt/content/post_1341962.html",
+   "source": "广东残联·新闻",
    "summary": "",
    "cr": [
     "mental",
@@ -2877,6 +3055,18 @@
    "date": "2026-07-14",
    "url": "https://www.cdpf.org.cn/zwgk/ggtz1/573a30c41c2847808e0abe9656d8f3b1.htm",
    "source": "中国残联·通知公告",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "民航新规便利残疾人航空出行《关于加强残疾人航空运输保障能力的若干措施》印发",
+   "date": "2026-07-06",
+   "url": "https://www.cdpf.org.cn/xwzx/clyw2/106158145b3c434598ef250ed57cc7a2.htm",
+   "source": "中国残联·维权",
    "summary": "",
    "cr": [
     "mental",
@@ -4385,6 +4575,30 @@
    ]
   },
   {
+   "title": "重庆市残疾人联合会关于2026年第二季度直属事业单位公开招聘工作人员结构化面试有关事宜的通知",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1537062989457231872/web/content_1537062989457231872.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "国务院残疾人工作委员会关于印发《国家残疾预防行动计划（2026—2030年）》的通知残工委发〔2026〕6号",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1559498568079843328/web/content_1559498568079843328.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
    "title": "自治区政府召开常务会议 审议通过妇女儿童及残疾人事业相关规划等",
    "date": "",
    "url": "https://www.xjdpf.org.cn/info/1104/34633.htm",
@@ -4413,30 +4627,6 @@
    "date": "",
    "url": "https://www.xjdpf.org.cn/info/1106/34959.htm",
    "source": "新疆·县市动态",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
-   "title": "重庆市残疾人联合会关于2026年第二季度直属事业单位公开招聘工作人员结构化面试有关事宜的通知",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1537062989457231872/web/content_1537062989457231872.html",
-   "source": "重庆残联",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
-   "title": "国务院残疾人工作委员会关于印发《国家残疾预防行动计划（2026—2030年）》的通知残工委发〔2026〕6号",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1559498568079843328/web/content_1559498568079843328.html",
-   "source": "重庆残联",
    "summary": "",
    "cr": [
     "mental",
@@ -4879,6 +5069,18 @@
  ],
  "teach": [
   {
+   "title": "第四期鲁迅文学院残疾人作家研修班开班",
+   "date": "2026-11-12",
+   "url": "https://www.cdpf.org.cn/ywpd/xcwh/gzdt6/54f832ec7f884c8e9ce3291546c27837.htm",
+   "source": "中国残联·宣传文化",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
    "title": "实施残疾预防行动 共建共享健康中国——中国残联等15部门部署第十次残疾预防日宣传教育活动",
    "date": "2026-08-04",
    "url": "https://www.cdpf.org.cn/xwzx/clyw2/14c97e835f2a4e9c910b5f8fd0334fbf.htm",
@@ -4975,6 +5177,42 @@
    ]
   },
   {
+   "title": "梅州市梅县区开展残疾人实用技术培训班",
+   "date": "",
+   "url": "https://www.gddpf.org.cn/xwzx/dfdt/content/post_1343228.html",
+   "source": "广东残联·新闻",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "“交通银行杯”2026年全国残疾人就业服务机构职业指导竞赛在渝收官",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1563231481220898816/web/content_1563231481220898816.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "长寿区残疾人自助互助康复服务培训有序开展",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1570094593035153408/web/content_1570094593035153408.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
    "title": "陈学军赴韶关调研残疾人就业培训工作",
    "date": "",
    "url": "https://www.gddpf.org.cn/xwzx/gzdt/content/post_1341957.html",
@@ -5039,18 +5277,6 @@
    "date": "",
    "url": "https://www.xjdpf.org.cn/info/1361/27641.htm",
    "source": "新疆·媒体聚焦",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
-   "title": "“交通银行杯”2026年全国残疾人就业服务机构职业指导竞赛在渝收官",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1563231481220898816/web/content_1563231481220898816.html",
-   "source": "重庆残联",
    "summary": "",
    "cr": [
     "mental",
@@ -5505,6 +5731,42 @@
    ]
   },
   {
+   "title": "2026年广东省残疾人体育健身周活动（湛江）举行 趣味运动展自强风采",
+   "date": "",
+   "url": "https://www.gddpf.org.cn/xwzx/mtgz/content/post_1342953.html",
+   "source": "广东残联·新闻",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "关于“百人百梦·星火山城”2026年重庆市残疾人光影大赛评选结果的公示",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1523660134814969856/web/content_1523660134814969856.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
+   "title": "江津区2026年残疾人运动会正式开幕 自强不息绽放运动风采",
+   "date": "",
+   "url": "https://www.cqdpf.org.cn/web/article/1570104747537412096/web/content_1570104747537412096.html",
+   "source": "重庆残联",
+   "summary": "",
+   "cr": [
+    "mental",
+    "mh",
+    "physical"
+   ]
+  },
+  {
    "title": "“我们都一样！”2026年深圳残疾人艺术汇演精彩上演",
    "date": "",
    "url": "https://www.gddpf.org.cn/xwzx/dfdt/content/post_1341817.html",
@@ -5556,18 +5818,6 @@
    "title": "第五届亚洲残疾人运动会在日本名古屋闭幕",
    "date": "",
    "url": "https://www.cqdpf.org.cn/web/article/1564970572090126336/web/content_1564970572090126336.html",
-   "source": "重庆残联",
-   "summary": "",
-   "cr": [
-    "mental",
-    "mh",
-    "physical"
-   ]
-  },
-  {
-   "title": "关于“百人百梦·星火山城”2026年重庆市残疾人光影大赛评选结果的公示",
-   "date": "",
-   "url": "https://www.cqdpf.org.cn/web/article/1523660134814969856/web/content_1523660134814969856.html",
    "source": "重庆残联",
    "summary": "",
    "cr": [
@@ -6302,5 +6552,5 @@
    ]
   }
  ],
- "updated_at": "2026-11-01 16:59:03"
+ "updated_at": "2026-11-15 17:25:38"
 }
