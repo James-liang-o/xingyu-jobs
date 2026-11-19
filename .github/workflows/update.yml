@@ -1,8 +1,8 @@
 name: update-jobs
 on:
   schedule:
-    # 岗位每天更新一次：UTC 每天 10:15（北京时间 18:15），全量爬取+三站生成
-    - cron: '15 10 * * *'
+    # 每 6 小时一次（UTC 0/6/12/18 点 15 分 → 北京 8:15/14:15/20:15/次日 2:15），全量爬取+三站生成
+    - cron: '15 */6 * * *'
   workflow_dispatch:
 permissions:
   contents: write

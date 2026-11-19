@@ -1947,8 +1947,12 @@ renderFilters();
   if(typeof CHUNK_TOTAL === 'undefined' || CHUNK_TOTAL <= 1) return;
   var timer = setInterval(function(){
     if(CHUNK_LOADED >= CHUNK_TOTAL){ clearInterval(timer); render(); renderFilters(); renderStats(); return; }
-    loadChunk(CHUNK_LOADED);
-  }, 120);
+    // 并行预取 4 片，避免大站（80 片）串行加载要一分多钟
+    var n = 0;
+    for(var i = CHUNK_LOADED; i < CHUNK_TOTAL && n < 4; i++){
+      if(!CHUNK_GOT[i] && !CHUNK_REQ[i]){ loadChunk(i); n++; }
+    }
+  }, 150);
 })();
 
 // ===== 设置面板：字号滑条 / 深色 / 简化版 / 朗读 =====
