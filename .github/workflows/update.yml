@@ -24,15 +24,21 @@ jobs:
       - name: 爬取岗位（源不可达时不阻断，继续用旧数据生成）
         run: |
           python spider_national.py || echo "spider 未完成，继续用现有数据生成"
-      - run: python gen_page.py
+      # 三站分片同名，必须各自输出到独立目录，否则互相覆盖
+      - name: 生成三站（独立目录）
         env:
           OWN_KEY: ${{ secrets.XINGYU_OWN_KEY }}
-      - run: python gen_page.py mental
-        env:
-          OWN_KEY: ${{ secrets.XINGYU_OWN_KEY }}
-      - run: python gen_page.py physical
-        env:
-          OWN_KEY: ${{ secrets.XINGYU_OWN_KEY }}
+        run: |
+          python gen_page.py mh /tmp/dist/mh
+          python gen_page.py mental /tmp/dist/mental
+          python gen_page.py physical /tmp/dist/physical
+      - name: 主站页面与分片落位
+        run: |
+          cp "/tmp/dist/mh/行隅_全国岗位导航.html" index.html
+          N=$(ls /tmp/dist/mh/jobs_chunk_*.js | wc -l)
+          rm -f jobs_chunk_*.js
+          cp /tmp/dist/mh/jobs_chunk_*.js .
+          echo "主站分片: $(ls jobs_chunk_*.js | wc -l) (期望 $N)"
       - name: Commit & push 主站
         run: |
           git config user.name "xingyu-bot"
@@ -46,10 +52,12 @@ jobs:
         run: |
           git config --global user.name "xingyu-bot"
           git config --global user.email "xingyu-bot@users.noreply.github.com"
-          for repo in "xingyu-mental:心行_精神障碍岗位导航.html" "xingyu-physical:健行_身体残疾岗位导航.html"; do
-            r="${repo%%:*}"; f="${repo##*:}"
-            rm -rf /tmp/$r && git clone -q --depth 1 "https://x:${PAT}@github.com/James-liang-o/${r}.git" /tmp/$r
-            cp "$f" /tmp/$r/index.html
+          for repo in "xingyu-mental:心行_精神障碍岗位导航.html:mental" "xingyu-physical:健行_身体残疾岗位导航.html:physical"; do
+            r="${repo%%:*}"; rest="${repo#*:}"; f="${rest%%:*}"; site="${rest##*:}"
+            rm -rf "/tmp/$r" && git clone -q --depth 1 "https://x:${PAT}@github.com/James-liang-o/${r}.git" "/tmp/$r"
+            cp "/tmp/dist/$site/$f" "/tmp/$r/index.html"
+            rm -f "/tmp/$r"/jobs_chunk_*.js
+            cp /tmp/dist/$site/jobs_chunk_*.js "/tmp/$r/"
             cd /tmp/$r
             git add -A
             git diff --cached --quiet || { git commit -m "auto update $(date +'%Y-%m-%d %H:%M')"; git push -q; }
